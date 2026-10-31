@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env", override=False)
 WORKSPACE = ROOT / "tools"
 PROJECTS = [
+    ("copilot", "business-data-copilot", "Business Data Copilot", "Upload a CSV or workbook, confirm its schema, and ask for verified, read-only analysis.", "▤", "Insights"),
     ("knowledge", "enterprise-knowledge-assistant", "Knowledge assistant", "Search approved docs and get answers with source citations.", "⌕", "Work"),
     ("helpdesk", "ai-it-helpdesk-assistant", "Helpdesk Triage", "Classify a support request and prepare a reviewable ticket.", "◈", "Work"),
     ("travel", "travel-itinerary-planner", "Trip planner", "Build an itinerary from a fictional activity catalog.", "✳", "Plan"),
@@ -188,6 +189,6 @@ def home():
 
 @app.get("/static/{asset}")
 def static_asset(asset: str):
-    if asset not in {"app.css", "app.js", "agent-hub.js"}:
+    if asset not in {"app.css", "app.js", "agent-hub.js", "copilot.js"}:
         raise HTTPException(status_code=404)
     return FileResponse(ROOT / "static" / asset)

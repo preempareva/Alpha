@@ -254,6 +254,16 @@ def _demand_forecast(_identity: AgentIdentity, arguments: dict[str, Any]) -> dic
     return forecast_module.forecast(frame, arguments["sku"], arguments["horizon"])
 
 
+def _copilot_profile(identity: AgentIdentity, _arguments: dict[str, Any]) -> dict[str, Any]:
+    copilot = _module("tools.business-data-copilot.app.main")
+    return copilot.SERVICE.store.profile_for_hub(identity)
+
+
+def _copilot_query(identity: AgentIdentity, arguments: dict[str, Any]) -> dict[str, Any]:
+    copilot = _module("tools.business-data-copilot.app.main")
+    return copilot.SERVICE.query(identity, arguments["question"])
+
+
 TOOL_WORKERS: dict[str, Callable[..., Any]] = {}
 TOOL_LABELS: dict[str, str] = {}
 
@@ -353,6 +363,11 @@ def build_registry() -> ToolRegistry:
         "sku": {"type": "string", "enum": list(DEMO_SKUS)},
         "horizon": {"type": "integer", "minimum": 1, "maximum": 8},
     }, ["sku", "horizon"]), _demand_forecast, max_rows=8)
+    register_read("copilot.profile", "Read the caller's confirmed schema without sensitive fields or sample rows.",
+                  _schema({}, []), _copilot_profile, data_label="USER_SCOPED", max_rows=100)
+    register_read("copilot.query", "Run verified, parameterized analysis against the caller's confirmed dataset.",
+                  _schema({"question": {"type": "string", "minLength": 4, "maxLength": 1000}}, ["question"]),
+                  _copilot_query, data_label="USER_SCOPED", max_rows=100)
     register_read("hub.verify_results", "Independently check evidence returned by the planned tools.", _schema({
         "source_call_ids": {"type": "array", "items": {"type": "string", "minLength": 1},
                             "minItems": 1, "maxItems": MAX_ANALYSIS_STEPS, "uniqueItems": True},
@@ -393,6 +408,14 @@ async def _verify_sources(
                     entry.raw.get("abstained") is True
                     or isinstance(entry.raw.get("citations"), list)
                 )
+            elif entry.tool_name == "copilot.query":
+                worker = TOOL_WORKERS[entry.tool_name]
+                expected = await asyncio.to_thread(worker, identity, entry.arguments)
+                verified = (
+                    isinstance(entry.raw, dict) and entry.raw.get("verified") is True
+                    and isinstance(expected, dict) and expected.get("verified") is True
+                    and _json_equal(entry.raw.get("rows"), expected.get("rows"))
+                )
             else:
                 worker = TOOL_WORKERS[entry.tool_name]
                 expected = await asyncio.to_thread(worker, identity, entry.arguments)
@@ -422,7 +445,11 @@ def _preflight(question: str) -> str:
         "raw sql", "select *", "--", ";",
     )):
         raise UnsupportedRequest("This Hub only accepts bounded read-only analysis requests.")
-    if re.search(r"\b(margin|profit|payroll|salary|weather)\b", text):
+    dataset_scope = (
+        bool(re.search(r"\b(uploaded|dataset|spreadsheet|worksheet|csv|xlsx)\b", text))
+        or "my data" in text or "this data" in text
+    )
+    if re.search(r"\b(margin|profit|payroll|salary|weather)\b", text) and not dataset_scope:
         raise UnsupportedRequest("That data or action is not available in the Hub catalogue.")
     return text
 
@@ -435,6 +462,16 @@ def deterministic_plan(question: str) -> AgentPlan:
         if len(clause) < 3:
             continue
         tokens = set(re.findall(r"[a-z0-9-]+", clause))
+        copilot_domain = (
+            bool(tokens.intersection({"uploaded", "upload", "dataset", "spreadsheet", "worksheet", "csv", "xlsx"}))
+            or "my data" in clause or "this data" in clause or "this dataset" in clause
+        )
+        if copilot_domain:
+            if tokens.intersection({"profile", "schema", "columns"}):
+                calls.append(ToolCall(tool_name="copilot.profile", arguments={}))
+            else:
+                calls.append(ToolCall(tool_name="copilot.query", arguments={"question": clause[:1000]}))
+            continue
         sales_domain = bool(tokens.intersection({"opportunity", "pipeline", "win", "crm"}))
         demand_domain = bool(tokens.intersection({"forecast", "demand"})) and not sales_domain
         churn_domain = bool(tokens.intersection({"churn", "retention"})) or "account health" in clause

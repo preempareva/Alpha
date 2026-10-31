@@ -1,6 +1,6 @@
 # Project Alpha
 
-Project Alpha puts thirteen focused AI and analytics demos behind one local workspace. It gives each tool its own guided form, result view, source or evidence details, and API documentation link.
+Project Alpha puts fourteen focused AI and analytics demos behind one local workspace. It gives each tool its own guided form, result view, source or evidence details, and API documentation link.
 
 ## Run it
 
@@ -29,6 +29,10 @@ Then open <http://127.0.0.1:8000>. The launch script uses a shared `.venv` in th
 - Use **API docs** on a tool page to inspect that tool's request and response schema.
 
 The tool screens live in `static/`; the Alpha API shell is in `alpha_app/`; the original project implementations and their tests are in `tools/`.
+
+## Business Data Copilot
+
+Business Data Copilot is the fourteenth tool. It supports small CSV/XLSX uploads, per-user workspace storage, a deterministic query planner, and independently checked read-only results. Its default benchmark uses clearly labelled synthetic data; user-uploaded data remains local to the configured workspace. See tools/business-data-copilot/README.md.
 
 ## Data and model boundaries
 

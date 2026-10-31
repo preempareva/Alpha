@@ -1,8 +1,9 @@
 [project]
 name = "project-alpha"
 version = "0.1.0"
-description = "A local workspace for thirteen focused AI and analytics tools."
+description = "A local workspace for fourteen focused AI and analytics tools."
 requires-python = ">=3.12,<3.15"
+dependencies = ["duckdb==2.0.0", "openpyxl==3.1.5"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "tools"]

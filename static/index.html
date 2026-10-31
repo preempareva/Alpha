@@ -15,7 +15,7 @@
         <span><strong>ALPHA</strong><small>AI WORKSPACE</small></span>
       </a>
       <div class="side-label">WORKSPACE</div>
-      <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Overview <span class="nav-count">13</span></button>
+      <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Overview <span class="nav-count" id="navProjectCount">14</span></button>
       <button class="nav-item hub-nav" data-view="agent-hub"><span class="nav-icon">✦</span> Agent Hub <span class="nav-count">NEW</span></button>
       <div class="side-label section-label">YOUR TOOLS</div>
       <div class="nav-list" id="navList"></div>
@@ -44,15 +44,15 @@
             <div class="orbit-chip chip-one">✧ &nbsp; INSIGHTS</div><div class="orbit-chip chip-two">⌘ &nbsp; ACTION</div>
             <div class="orbit-chip chip-three">◌ &nbsp; INTELLIGENCE</div>
           </div>
-          <div class="hero-index">01 <span>/ 13</span></div>
+          <div class="hero-index">01 <span id="projectCount">/ 14</span></div>
         </div>
 
         <div class="section-heading" id="toolSection">
-          <div><div class="eyebrow muted">THE WORKSPACE</div><h2>Pick up where curiosity leads.</h2><p>Thirteen focused tools. One calm place to explore them.</p></div>
+          <div><div class="eyebrow muted">THE WORKSPACE</div><h2>Pick up where curiosity leads.</h2><p><span id="projectCountText">14</span> focused tools. One calm place to explore them.</p></div>
           <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Find a tool..." aria-label="Find a tool"><kbd>/</kbd></div>
         </div>
         <div class="filter-row" id="filterRow">
-          <button class="filter active" data-filter="All">All tools <span>13</span></button>
+          <button class="filter active" data-filter="All">All tools <span id="filterCount">14</span></button>
           <button class="filter" data-filter="Work">Work</button>
           <button class="filter" data-filter="Plan">Planning</button>
           <button class="filter" data-filter="Insights">Insights</button>
@@ -114,5 +114,6 @@
   </div>
   <script src="/static/app.js"></script>
   <script src="/static/agent-hub.js"></script>
+  <script src="/static/copilot.js"></script>
 </body>
 </html>

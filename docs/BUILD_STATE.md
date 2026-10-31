@@ -58,3 +58,21 @@ Added the authenticated Hub API and a vanilla JavaScript workspace screen with t
 ## Next action
 
 Begin Phase D1: implement the Business Data Copilot upload, profiling, and isolated synthetic workspace data path without changing the existing 13 projects.
+
+
+## Phase D notes
+
+Added the Business Data Copilot as the fourteenth Alpha tool while preserving the existing thirteen slugs and route prefixes. It supports bounded CSV/XLSX uploads, in-memory schema previews, explicit schema confirmation, hashed owner/workspace DuckDB storage, session-bound CSRF, read-only typed queries, a SQLGlot SELECT guard, timeout/result caps, an independent pandas verifier, and formula-safe CSV export. Sensitive fields are removed from optional planner schemas, Hub profiles, confirmed previews, dimensions, filters, query labels, and audit plans; explicit aggregates are deterministic and use generic aliases. The shared Hub now registers copilot.profile and copilot.query.
+
+- Full tests: **135 passed**, 7 dependency/deprecation warnings. Tests used PYTHON_DOTENV_DISABLED and temporary test stores.
+- Copilot-focused tests: **16 passed**, including file/magic checks, XLSX macro/external/embedded/traversal rejection, formula text preservation, SQL injection parameterization, cross-user/workspace access, CSRF, upload body cap, sensitive date grouping, Hub routing, CSV formula escaping, and verifier tampering.
+- Changed-code Ruff passed. Repo-wide Ruff reports **111 legacy findings**; no broad reformat was attempted.
+- Mypy passed for **14 Alpha core/Hub files**, **6 BI source files**, and **11 Copilot source/script files**. JavaScript syntax passed for all static JS modules.
+- Copilot synthetic evaluation: **40/40** numeric questions, **4/4** refusal cases, verifier caught **5/5** tampered results; p50/p95 **150.718 / 187.191 ms**, with LLM_PROVIDER=none. The hand-authored templates cover one fixed-seed fictional dataset only and do not estimate general query accuracy.
+- The synthetic demo generator ran successfully and its output was confirmed git-ignored. No result rows or uploaded content are recorded in the evaluation.
+- DuckDB data is not encrypted at rest. This limitation is documented in the tool README, data card, threat model, and UI.
+- Only Python 3.14 is available in this environment; the Python 3.12 target remains unverified.
+
+## Next action
+
+Begin Phase E: implement the Inventory Control Tower against the existing synthetic inventory source, preserve both legacy app slugs/routes, and add formula/backtest/scenario gates before checkpointing.
