@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import sqlite3
+import json
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,11 +27,27 @@ SETUP = (
 def seed_missing() -> None:
     for project, check, scripts in SETUP:
         project_root = ROOT / "tools" / project
-        if (project_root / check).exists():
+        asset = project_root / check
+        needs_seed = not asset.exists()
+        if project == "enterprise-knowledge-assistant" and asset.exists():
+            try:
+                with sqlite3.connect(asset) as db:
+                    count = db.execute("SELECT count(*) FROM documents WHERE active=1").fetchone()[0]
+                needs_seed = count < 30
+            except sqlite3.Error:
+                needs_seed = True
+        if not needs_seed:
             continue
         for script in scripts:
             module = f"tools.{project}.scripts.{script}"
             subprocess.run([sys.executable, "-m", module], cwd=ROOT, check=True)
+    questions = ROOT / "tools" / "enterprise-knowledge-assistant" / "data" / "evaluation" / "questions.json"
+    try:
+        needs_questions = len(json.loads(questions.read_text(encoding="utf-8"))) < 100
+    except (OSError, ValueError):
+        needs_questions = True
+    if needs_questions:
+        subprocess.run([sys.executable, "-m", "tools.enterprise-knowledge-assistant.scripts.build_questions"], cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":

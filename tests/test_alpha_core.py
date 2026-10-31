@@ -49,3 +49,29 @@ def test_validation_errors_include_request_id():
     response = client.post("/api/travel-weather", json={"destination": "x"}, headers={"X-Request-ID": "bad-input"})
     assert response.status_code == 422
     assert response.json()["request_id"] == "bad-input"
+
+
+def test_travel_weather_uses_geocoding_and_forecast_responses(monkeypatch):
+    app_module = import_module("alpha_app.main")
+    responses = iter([
+        {"results": [{"name": "London", "admin1": "England", "country": "United Kingdom",
+                      "latitude": 51.5, "longitude": -0.1}]},
+        {"timezone": "Europe/London", "daily": {
+            "time": ["2026-11-01"], "weather_code": [1], "temperature_2m_max": [12],
+            "temperature_2m_min": [7], "precipitation_probability_max": [20],
+        }},
+    ])
+    requested = []
+
+    def fake_get_json(url):
+        requested.append(url)
+        return next(responses)
+
+    monkeypatch.setattr(app_module, "_get_json", fake_get_json)
+    app_module._weather_cache.pop("london", None)
+    response = TestClient(app_module.app).post("/api/travel-weather", json={"destination": "London"})
+
+    assert response.status_code == 200
+    assert response.json()["destination"] == "London, England, United Kingdom"
+    assert response.json()["days"][0]["max_c"] == 12
+    assert len(requested) == 2

@@ -1,4 +1,5 @@
 import os
+import json
 from importlib import import_module
 from pathlib import Path
 
@@ -93,6 +94,54 @@ def test_expired_documents_are_not_returned(client):
     login(client, "alice")
     result = client.post("/api/ask", json={"question": "synthetic launch code ORBITAL"}).json()
     assert result["abstained"] is True and not result["citations"]
+
+
+def test_ambiguous_and_historical_questions_abstain(client):
+    assert client.post("/api/ask", json={"question": "Which policy applies?"}).json()["abstained"] is True
+    historical = client.post("/api/ask", json={"question": "What did the expired 2023 hotel policy allow?"}).json()
+    assert historical["abstained"] is True and historical["citations"] == []
+
+
+def test_ollama_answer_requires_a_retrieved_citation_and_source_overlap(client, monkeypatch):
+    upload(client)
+    login(client, "alice")
+    user = client.get("/api/me").json()["user"]
+    request = module.AskRequest(question="hotel claim limit")
+    source = module.retrieve(request, user)["citations"][0]
+    valid = {"answer": "Employees may claim INR 2500 for hotel stays.", "citation_ids": [source["chunk_id"]], "abstain": False}
+    from alpha_core.llm import FakeProvider
+
+    monkeypatch.setattr(module, "get_provider", lambda: FakeProvider([json.dumps(valid)]))
+    result = client.post("/api/ask", json={"question": "hotel claim limit"}).json()
+    assert result["answer_source"] == "local-ollama"
+    assert result["citations"][0]["chunk_id"] == source["chunk_id"]
+
+    invalid = {"answer": "Unsupported claim in the answer.", "citation_ids": ["unknown-chunk"], "abstain": False}
+    monkeypatch.setattr(module, "get_provider", lambda: FakeProvider([json.dumps(invalid), json.dumps(invalid)]))
+    fallback = client.post("/api/ask", json={"question": "hotel claim limit"}).json()
+    assert fallback["answer_source"] == "deterministic"
+    assert fallback["citations"][0]["chunk_id"] == source["chunk_id"]
+
+
+def test_optional_embedding_retrieval_can_find_a_non_lexical_match(client, monkeypatch):
+    upload(client)
+    login(client, "alice")
+
+    class FakeEmbeddingProvider:
+        embedding_model = "nomic-test"
+
+        def embed(self, texts, *, timeout_s=30):
+            return [[1.0, 0.0] for _ in texts]
+
+        def complete(self, *args, **kwargs):
+            from alpha_core.llm import LLMDisabled
+            raise LLMDisabled("Synthesis disabled in this retrieval test.")
+
+    monkeypatch.setattr(module, "get_provider", lambda: FakeEmbeddingProvider())
+    assert module.index_missing_embeddings() > 0
+    user = client.get("/api/me").json()["user"]
+    result = module.retrieve(module.AskRequest(question="lodging reimbursement ceiling"), user)
+    assert result["citations"][0]["filename"] == "travel.md"
 
 
 def test_upload_limit_and_extension_are_enforced(client):

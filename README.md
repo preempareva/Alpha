@@ -44,4 +44,4 @@ Run the full test suite from this folder:
 python -m pytest
 ```
 
-The suite covers each project's current tests and the combined workspace health routes. See [the baseline audit](docs/AUDIT.md) for current limitations and the phased remediation plan. `AGENTS.md` contains the project engineering constraints.
+The suite covers each project's current tests and the combined workspace health routes. `AGENTS.md` contains the project engineering constraints.

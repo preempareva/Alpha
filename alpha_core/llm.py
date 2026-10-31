@@ -45,6 +45,21 @@ class OllamaProvider:
     def __init__(self, model: str | None = None, base_url: str | None = None) -> None:
         self.model = model or os.getenv("OLLAMA_MODEL", "llama3.1:8b")
         self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL") or "http://127.0.0.1:11434").rstrip("/")
+        self.embedding_model = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+
+    def embed(self, texts: list[str], *, timeout_s: float = 30) -> list[list[float]]:
+        """Return local Ollama embeddings; callers can fall back to lexical search on failure."""
+        with httpx.Client(timeout=timeout_s) as client:
+            response = client.post(f"{self.base_url}/api/embed", json={"model": self.embedding_model, "input": texts})
+            response.raise_for_status()
+            payload = response.json()
+        vectors = payload.get("embeddings")
+        if not isinstance(vectors, list) or len(vectors) != len(texts):
+            raise ValueError("Ollama returned an unexpected embeddings response.")
+        result = [[float(value) for value in vector] for vector in vectors]
+        if any(not vector for vector in result) or len({len(vector) for vector in result}) > 1:
+            raise ValueError("Ollama returned empty or inconsistent embedding vectors.")
+        return result
 
     def complete(
         self,

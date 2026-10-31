@@ -11,7 +11,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request as URLRequest, urlopen
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -48,7 +48,7 @@ class WeatherRequest(BaseModel):
 
 
 def _get_json(url: str) -> dict:
-    request = Request(url, headers={"User-Agent": "ProjectAlpha/1.0 (personal local travel planner)"})
+    request = URLRequest(url, headers={"User-Agent": "ProjectAlpha/1.0 (personal local travel planner)"})
     with urlopen(request, timeout=12) as response:
         return json.loads(response.read().decode("utf-8"))
 
