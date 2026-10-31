@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from itsdangerous import URLSafeTimedSerializer
 
-from alpha_core.auth import InvalidSession, SignedSessionCodec
+from alpha_core.auth import InvalidCsrfToken, InvalidSession, SignedSessionCodec
 
 
 def test_shared_codec_reads_existing_knowledge_session_cookie_shape():
@@ -25,3 +25,15 @@ def test_shared_codec_rejects_bad_or_subjectless_session():
         codec.read_subject("forged")
     with pytest.raises(InvalidSession):
         codec.read_subject(serializer.dumps({"role": "admin"}))
+
+
+def test_csrf_token_is_signed_time_limited_and_bound_to_session_subject():
+    codec = SignedSessionCodec("test-only-knowledge-secret", salt="alpha-knowledge-session-v1",
+                               max_age_seconds=60)
+    token = codec.issue_csrf("user-123")
+
+    assert codec.verify_csrf(token, "user-123") is None
+    with pytest.raises(InvalidCsrfToken):
+        codec.verify_csrf(token, "other-user")
+    with pytest.raises(InvalidCsrfToken):
+        codec.verify_csrf("forged", "user-123")

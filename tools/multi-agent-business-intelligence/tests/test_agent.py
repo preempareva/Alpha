@@ -175,6 +175,12 @@ def test_ambiguous_request_asks_for_clarification():
         agent.route_question("Compare product categories and products")
 
 
+def test_plural_refunds_routes_to_refund_rate():
+    call = agent.route_question("Compare refunds by category")
+    assert call.tool_name == "refund_rate"
+    assert call.arguments == {"by": "category"}
+
+
 def test_llm_preflight_refuses_unsafe_question_without_calling_provider(
     identity: AgentIdentity, warehouse: Path
 ):

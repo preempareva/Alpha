@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from alpha_core.observability import RequestContextMiddleware
 from alpha_core.settings import Settings
+from alpha_app.agent_hub import router as agent_hub_router
 
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env", override=False)
@@ -88,6 +89,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Project Alpha", lifespan=lifespan)
 app.add_middleware(RequestContextMiddleware)
+app.include_router(agent_hub_router)
 _loaded_apps = []
 
 for slug, folder, _title, _description, _icon, _group in PROJECTS:
@@ -186,6 +188,6 @@ def home():
 
 @app.get("/static/{asset}")
 def static_asset(asset: str):
-    if asset not in {"app.css", "app.js"}:
+    if asset not in {"app.css", "app.js", "agent-hub.js"}:
         raise HTTPException(status_code=404)
     return FileResponse(ROOT / "static" / asset)

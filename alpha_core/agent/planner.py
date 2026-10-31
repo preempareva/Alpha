@@ -18,6 +18,10 @@ class Planner(Protocol):
     def plan(self, question: str) -> AgentPlan: ...
 
 
+class PlannerWithMode(Protocol):
+    def plan_with_mode(self, question: str) -> PlanningResult: ...
+
+
 @dataclass(frozen=True)
 class PlanningResult:
     plan: AgentPlan
@@ -47,7 +51,7 @@ class LLMPlanner:
 
     def __init__(
         self,
-        fallback: DeterministicPlanner,
+        fallback: PlannerWithMode,
         *,
         provider: LLMProvider | None = None,
         tool_names: tuple[str, ...],

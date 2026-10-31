@@ -16,6 +16,7 @@
       </a>
       <div class="side-label">WORKSPACE</div>
       <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Overview <span class="nav-count">13</span></button>
+      <button class="nav-item hub-nav" data-view="agent-hub"><span class="nav-icon">✦</span> Agent Hub <span class="nav-count">NEW</span></button>
       <div class="side-label section-label">YOUR TOOLS</div>
       <div class="nav-list" id="navList"></div>
       <div class="sidebar-bottom">
@@ -60,6 +61,47 @@
         <footer class="footer"><span>PROJECT ALPHA <b>•</b> PERSONAL AI WORKSPACE</span><span>LOCAL DEMO DATA <b>·</b> BUILT FOR EXPLORATION</span></footer>
       </section>
 
+      <section id="agentHubView" class="page-view hub-page hidden" aria-labelledby="hubTitle">
+        <div class="hub-heading">
+          <div>
+            <div class="eyebrow">ALPHA AGENT HUB <span class="status-chip">READ ONLY</span></div>
+            <h1 id="hubTitle">Ask across your workspace.</h1>
+            <p>Plan a bounded run across registered tools. Every result is independently checked and carries evidence IDs.</p>
+          </div>
+          <div class="hub-badges"><span class="source-badge">SYNTHETIC DEMOS</span><span id="hubModeBadge" class="source-badge">LLM OFF · DETERMINISTIC</span></div>
+        </div>
+        <div id="hubNotice" class="hub-notice" role="status" aria-live="polite">Sign in through the Knowledge Assistant to use the Hub.</div>
+        <div class="hub-layout">
+          <div class="hub-main-column">
+            <section class="studio-card hub-card" aria-labelledby="hubAskTitle">
+              <div class="hub-card-head"><div><h2 id="hubAskTitle">New analysis</h2><p>Try “Show monthly revenue and forecast SKU-001 for 6 weeks.”</p></div><span class="status-chip">MAX 5 STEPS</span></div>
+              <label class="field hub-question"><span class="field-label">What would you like to know?</span><textarea id="hubQuestion" maxlength="1000" rows="3" placeholder="Ask a read-only business question" aria-describedby="hubQuestionHelp"></textarea></label>
+              <div id="hubQuestionHelp" class="hub-help">The Hub only uses approved read-only tools. Do not enter secrets or personal data.</div>
+              <div class="form-actions"><button id="hubPreviewButton" class="secondary-button" type="button">Preview plan</button><button id="hubRunButton" class="action-button" type="button" disabled>Run analysis</button><button id="hubCancelButton" class="quiet-button hidden" type="button">Cancel run</button><span id="hubRunState" class="result-state" role="status">READY</span></div>
+              <div id="hubPlan" class="hub-plan" aria-live="polite"><div class="result-empty">Preview a plan to see the tools and arguments before running.</div></div>
+            </section>
+            <section class="studio-card hub-card" aria-labelledby="hubResultTitle">
+              <div class="hub-card-head"><div><h2 id="hubResultTitle">Run results</h2><p>Verified findings, source rows, trace timing, and limitations.</p></div><span id="hubResultState" class="result-state">EMPTY</span></div>
+              <div id="hubResult" class="result-empty">Results will appear here after a run.</div>
+            </section>
+            <section class="studio-card hub-card" aria-labelledby="hubCatalogueTitle">
+              <div class="hub-card-head"><div><h2 id="hubCatalogueTitle">Available tools</h2><p>Only tools allowed for your signed-in account appear here.</p></div><button id="hubRefreshButton" class="quiet-button" type="button">Refresh</button></div>
+              <div id="hubCatalogue" class="hub-tool-list"><div class="result-empty">Sign in to load the tool catalogue.</div></div>
+            </section>
+          </div>
+          <aside class="hub-side-column" aria-label="Agent Hub run controls">
+            <section class="studio-card hub-card" aria-labelledby="hubApprovalsTitle">
+              <div class="hub-card-head"><div><h2 id="hubApprovalsTitle">Approval inbox</h2><p>Draft actions stay paused until an authorized reviewer responds.</p></div><span id="hubApprovalCount" class="status-chip">0 PENDING</span></div>
+              <div id="hubApprovals" class="hub-list"><div class="result-empty">No pending approvals.</div></div>
+            </section>
+            <section class="studio-card hub-card" aria-labelledby="hubHistoryTitle">
+              <div class="hub-card-head"><div><h2 id="hubHistoryTitle">Run history</h2><p>Your runs and workspace admin-visible runs.</p></div><button id="hubHistoryButton" class="quiet-button" type="button">Refresh</button></div>
+              <div id="hubHistory" class="hub-list"><div class="result-empty">Sign in to load run history.</div></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
       <section id="toolView" class="tool-view hidden">
         <div class="tool-toolbar">
           <button id="backButton" class="back-button"><span>←</span> All tools</button>
@@ -71,5 +113,6 @@
     </main>
   </div>
   <script src="/static/app.js"></script>
+  <script src="/static/agent-hub.js"></script>
 </body>
 </html>

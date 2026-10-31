@@ -207,7 +207,7 @@ def route_question(question: str) -> ToolCall:
         raise UnsupportedQuestion("That metric or data is not available in the synthetic BI catalogue.")
 
     has_anomaly = bool(tokens.intersection({"anomaly", "anomalies", "unusual", "spike", "outlier"}))
-    has_refund = "refund" in tokens or {"return", "rate"}.issubset(tokens)
+    has_refund = bool(tokens.intersection({"refund", "refunds"})) or {"return", "rate"}.issubset(tokens)
     has_region = bool(tokens.intersection({"region", "regions", "regional"}))
     has_category = bool(tokens.intersection({"category", "categories"}))
     has_product = bool(tokens.intersection({"product", "products", "sku", "skus"}))

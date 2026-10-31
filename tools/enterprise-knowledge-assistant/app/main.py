@@ -28,6 +28,7 @@ MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", "10000000"))
 MIN_SCORE = float(os.getenv("MIN_RETRIEVAL_SCORE", "0.35"))
 SESSION_TTL_SECONDS = 8 * 60 * 60
 SESSION_COOKIE = "alpha_knowledge_session"
+WORKSPACE_ID = os.getenv("ALPHA_WORKSPACE_ID", "alpha-demo")
 ALLOWED_EXTENSIONS = {".md", ".txt", ".html", ".pdf"}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -198,7 +199,7 @@ def current_user(request: Request) -> dict:
     if not row or not row["active"]:
         raise HTTPException(401, "This account is unavailable. Sign in again.")
     return {"id": row["id"], "username": row["username"], "role": row["role"],
-            "groups": json.loads(row["groups_json"])}
+            "groups": json.loads(row["groups_json"]), "workspace_id": WORKSPACE_ID}
 
 
 def require_admin(user: dict = Depends(current_user)) -> dict:

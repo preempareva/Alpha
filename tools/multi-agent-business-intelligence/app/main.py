@@ -33,7 +33,7 @@ def agent_identity(user: dict) -> AgentIdentity:
         user_id=str(user["id"]),
         roles=frozenset({str(user["role"])}),
         groups=frozenset(str(group) for group in user.get("groups", [])),
-        workspace_id=str(user["id"]),
+        workspace_id=str(user.get("workspace_id") or user["id"]),
         active=True,
     )
 

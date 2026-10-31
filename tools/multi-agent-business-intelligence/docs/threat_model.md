@@ -2,7 +2,7 @@
 
 ## Assets and boundaries
 
-The only business data is generated synthetic retail order data. The route resolves the existing signed Knowledge Assistant session and uses a database-resolved user and role; `Idempotency-Key` is only a replay key. Trace reads are scoped by that authenticated identity. Each user is assigned an isolated demo workspace keyed from the server-resolved user ID.
+The only business data is generated synthetic retail order data. The route resolves the existing signed Knowledge Assistant session and uses a database-resolved user and role; `Idempotency-Key` is only a replay key. Non-admin trace reads are owner-scoped. The server attaches the configured `ALPHA_WORKSPACE_ID` (default `alpha-demo`) to the principal; admins can inspect runs only in that configured workspace. Workspace identity is never accepted from the client.
 
 ## Untrusted input and planner output
 

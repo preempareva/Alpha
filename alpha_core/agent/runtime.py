@@ -49,7 +49,7 @@ class BoundedExecutor:
         self.allow_self_approval = allow_self_approval
         self._guard = threading.RLock()
         self._run_locks: dict[str, threading.Lock] = {}
-        self._active_events: dict[str, asyncio.Event] = {}
+        self._active_events: dict[str, tuple[asyncio.Event, asyncio.AbstractEventLoop]] = {}
 
     async def run(
         self,
@@ -120,8 +120,9 @@ class BoundedExecutor:
         if lock is None:
             raise RunInProgress("another request is already executing this run")
         event = cancel_event or asyncio.Event()
+        loop = asyncio.get_running_loop()
         with self._guard:
-            self._active_events[run_id] = event
+            self._active_events[run_id] = (event, loop)
         correlation_id = str(stored["correlation_id"])
         try:
             if not self.trace.claim_run(run_id, resume=resuming):
@@ -265,9 +266,10 @@ class BoundedExecutor:
     def cancel(self, run_id: str, identity: AgentIdentity) -> bool:
         self.trace.get_run_for(run_id, identity)
         with self._guard:
-            event = self._active_events.get(run_id)
-        if event is not None:
-            event.set()
+            active = self._active_events.get(run_id)
+        if active is not None:
+            event, loop = active
+            loop.call_soon_threadsafe(event.set)
             return True
         self.trace.cancel_for(run_id, identity)
         return True
