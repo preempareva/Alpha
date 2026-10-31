@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$venv = Join-Path $PSScriptRoot '.venv'
+$venv = Join-Path (Split-Path -Parent $PSScriptRoot) '.venv'
 $python = Join-Path $venv 'Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) {
   $systemPython = Get-Command python -ErrorAction SilentlyContinue
