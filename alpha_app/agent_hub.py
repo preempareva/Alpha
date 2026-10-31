@@ -342,6 +342,7 @@ def build_registry() -> ToolRegistry:
         *,
         data_label: str = "SYNTHETIC",
         max_rows: int = 20,
+        timeout_seconds: int = READ_TOOL_TIMEOUT_SECONDS,
     ) -> None:
         TOOL_WORKERS[name] = worker
         TOOL_LABELS[name] = data_label
@@ -376,7 +377,7 @@ def build_registry() -> ToolRegistry:
             module=__name__,
             allowed_roles=ANALYST_ROLES,
             side_effect="read",
-            timeout_seconds=READ_TOOL_TIMEOUT_SECONDS,
+            timeout_seconds=timeout_seconds,
             max_rows=max_rows,
             max_bytes=150_000,
         ), handler, module=__name__)
@@ -427,7 +428,7 @@ def build_registry() -> ToolRegistry:
                   _schema({"horizon_weeks": {"type": "integer", "minimum": 1, "maximum": 26},
                            "limit": {"type": "integer", "minimum": 1, "maximum": 20}},
                           ["horizon_weeks", "limit"]),
-                  _inventory_read("inventory.risk_ranking"), max_rows=20)
+                  _inventory_read("inventory.risk_ranking"), max_rows=20, timeout_seconds=15)
     register_read("inventory.position", "Read sellable stock, inbound, backorders, supplier and cover for a synthetic SKU/location.",
                   _schema({"sku": sku_schema, "location": location_schema}, ["sku", "location"]),
                   _inventory_read("inventory.position"), max_rows=1)

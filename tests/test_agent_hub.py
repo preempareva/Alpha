@@ -161,6 +161,27 @@ def test_cross_tool_run_returns_independently_verified_evidence(hub_client: Any)
     assert all(item["tool_result_id"] in body["evidence_ids"] for item in body["data"])
 
 
+def test_copilot_and_inventory_catalogue_scopes_and_cross_project_plan() -> None:
+    names = {
+        "copilot.profile", "copilot.query", "inventory.risk_ranking", "inventory.position",
+        "inventory.forecast", "inventory.simulate_scenario", "inventory.transfer_options",
+    }
+    for name in names:
+        spec = hub.REGISTRY.get(name).spec
+        assert spec.side_effect == "read"
+        assert spec.allowed_roles == hub.ANALYST_ROLES
+    assert hub.REGISTRY.get("inventory.risk_ranking").spec.timeout_seconds == 15
+    assert hub.REGISTRY.get("inventory.position").spec.timeout_seconds == hub.READ_TOOL_TIMEOUT_SECONDS
+
+    plan = hub.plan_hub(
+        "Which inventory SKUs are at risk over the next 6 weeks and show monthly revenue"
+    ).plan
+    assert [call.tool_name for call in plan.steps] == [
+        "inventory.risk_ranking", "inventory.position", "inventory.forecast",
+        "bi.revenue_trend", "hub.verify_results",
+    ]
+
+
 def test_run_scope_is_owner_or_same_workspace_admin(hub_client: Any) -> None:
     response = hub_client.post(
         "/api/agent/ask", json={"question": "Show monthly revenue"},

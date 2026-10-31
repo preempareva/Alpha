@@ -149,6 +149,18 @@ def test_seasonal_naive_and_croston_sba_boundaries() -> None:
     assert all(value >= 0 for value in intermittent)
 
 
+def test_ets_cache_reuses_the_same_history_for_shorter_horizons() -> None:
+    values = np.linspace(5, 15, 52, dtype=float)
+    forecast_module._cached_ets_forecast.cache_clear()
+    first = forecast_module.forecast_points("ets", values, 6)
+    hits_before = forecast_module._cached_ets_forecast.cache_info().hits
+    second = forecast_module.forecast_points("ets", values, 4)
+    hits_after = forecast_module._cached_ets_forecast.cache_info().hits
+    assert np.array_equal(first[:4], second)
+    assert hits_after == hits_before + 1
+    forecast_module._cached_ets_forecast.cache_clear()
+
+
 def test_forecast_interval_is_ordered_and_uses_only_training_values(tower_data) -> None:
     _root, tables = tower_data
     series = tables.sales_history.loc[

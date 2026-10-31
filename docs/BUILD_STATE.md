@@ -19,7 +19,7 @@ Baseline was run on branch alpha-v2-build before changes for this master plan. T
 - [x] Phase C — Alpha Agent Hub. Gate passed: full pytest 119 passed, 7 warnings; scoped Ruff passed; mypy passed for 14 Alpha core/Hub files and 5 BI package source files; JavaScript syntax passed for both static files; 60-task HTTPX/API and runtime evaluation plus five BI tamper trials completed.
 - [x] Phase D — Business Data Copilot. Gate passed: 135 full-suite tests; 16 Copilot-focused tests; scoped Ruff, core/BI/Copilot mypy, JS syntax, and the saved synthetic Copilot evaluation passed.
 - [x] Phase E — Inventory Control Tower. Gate passed: 154 full-suite tests; 19 inventory tests covered by the full run; scoped Ruff, core and inventory mypy, JS syntax, dependency consistency, and saved forecast/scenario evaluation passed.
-- [ ] Phase F — Hub wiring and expanded evaluation.
+- [x] Phase F — Hub wiring and expanded evaluation. Gate passed: 156 full-suite tests; expanded 80-task Hub evaluation with 20/20 cross-project tasks successful; scoped Ruff, core/inventory mypy, JS syntax, dependency checks, and screenshot TODO documentation passed.
 - [ ] Phase G — Housekeeping, CI, docs consistency.
 - [ ] Phase H — Final self-audit and fresh-clone verification.
 
@@ -79,6 +79,17 @@ Merged the inventory forecasting and replenishment workflows into Inventory Cont
 - The standalone inventory legacy routes and both existing inventory slugs remain available. The local approval flow does not create or send real purchase orders.
 - Only Python 3.14 is available in this environment; Python 3.12 remains unverified. Browser-driven UI testing was not run.
 
+## Phase F notes
+
+Verified that Copilot and Inventory read tools appear in the Hub registry with their user/analyst scopes; inventory proposal and simulated-execution tools remain approval-gated drafts. Added 20 hand-authored cross-project cases, each executing risk ranking, position, forecast, one BI analysis, and independent verification. The screenshots section lists exact capture steps because no headless browser package is available.
+
+- Full test suite: **156 passed**, 7 dependency/deprecation warnings, with temporary test stores, `PYTHON_DOTENV_DISABLED=1`, and `LLM_PROVIDER=none`.
+- Expanded Hub evaluation: **80 tasks** (the original 60 plus 20 cross-project). Original normal-task selection, argument accuracy, and end-to-end success: **1.0000**. Cross-project tool selection, arguments, completion, and traces: **1.0000** across 20/20 tasks. Correct refusals: **12/12**; policy denials: **6/6**; trace completeness: **68/68**; p50/p95 **16.399/1360.447 ms**; BI tamper trials caught **5/5**.
+- Evaluation fixtures were generated under a temporary directory. The report contains task metadata and aggregate values only, no result rows.
+- A bounded 256-entry in-process ETS forecast cache avoids repeated fits for identical histories. The aggregate inventory risk read uses a 15-second cap for initial cache fill; the other Hub reads retain the 8-second default.
+- Changed-code Ruff passed; mypy passed for **14 Alpha core/Hub files** and **6 inventory source/script files**. All tracked static JavaScript passed `node --check`; `git diff --check` and `pip check` passed.
+- LLM_PROVIDER remained `none`; Ollama was not run. Browser-driven screenshots and Playwright flows remain unverified.
+
 ## Next action
 
-Begin Phase F: rerun the 60-task Agent Hub benchmark and add 20 evaluated cross-project tasks that each use at least three read tools, then update Hub demo and screenshot guidance.
+Begin Phase G: reconcile architecture and product docs, labels, CI and thresholds, security coverage, ignored generated assets, seed_all, project documentation, and flagship case studies.

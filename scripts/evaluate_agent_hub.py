@@ -148,7 +148,59 @@ def normal_cases() -> list[dict[str, Any]]:
     return cases
 
 
+def cross_tool_cases() -> list[dict[str, Any]]:
+    """Cross-project cases join three inventory tools with one BI tool each."""
+    bi_prompts = [
+        ("Show monthly revenue", "revenue_trend", {"grain": "month"}),
+        ("Show weekly revenue", "revenue_trend", {"grain": "week"}),
+        ("Show top products by revenue", "top_products", {}),
+        ("Rank top products by units", "top_products", {"metric": "units"}),
+        ("Show top categories by revenue", "top_categories", {}),
+        ("Rank top categories by units", "top_categories", {"metric": "units"}),
+        ("Show refund rate by category", "refund_rate", {"by": "category"}),
+        ("Find refund rate by region", "refund_rate", {"by": "region"}),
+        ("Check revenue anomalies", "anomaly_check", {}),
+        ("Show revenue by region", "region_breakdown", {}),
+    ]
+    inventory_openers = (
+        "Which inventory SKUs are at risk",
+        "Rank inventory risk positions for",
+        "Show stockout risk for",
+        "Review inventory risk for",
+    )
+    cases: list[dict[str, Any]] = []
+    for index in range(20):
+        sku_number = index % 4 + 1
+        location_number = index % 3 + 1
+        horizon = (2, 3, 4, 6, 8)[index % 5]
+        sku = f"SKU-{sku_number:03d}"
+        location = f"LOC-{location_number:03d}"
+        prompt, bi_tool, bi_arguments = bi_prompts[index % len(bi_prompts)]
+        risk_question = inventory_openers[index % len(inventory_openers)]
+        question = (
+            f"{risk_question} {sku} at {location} over the next {horizon} weeks "
+            f"and {prompt.casefold()}"
+        )
+        cases.append({
+            "class": "cross_tool",
+            "question": question,
+            "expected_tools": [
+                "inventory.risk_ranking", "inventory.position", "inventory.forecast", f"bi.{bi_tool}",
+            ],
+            "expected_arguments": [
+                {"horizon_weeks": horizon, "limit": 20},
+                {"sku": sku, "location": location},
+                {"sku": sku, "location": location, "horizon_weeks": horizon},
+                bi_args(bi_tool, **bi_arguments),
+            ],
+        })
+    if len(cases) != 20 or any(len(case["expected_tools"]) < 3 for case in cases):
+        raise RuntimeError("Cross-project evaluation must contain 20 tasks with at least three tools each.")
+    return cases
+
+
 def run_normal(case: dict[str, Any], index: int) -> dict[str, Any]:
+    case_class = str(case.get("class", "normal"))
     trace = TraceStore(":memory:")
     executor = BoundedExecutor(hub.REGISTRY, hub.POLICY, trace)
     started = time.perf_counter()
@@ -173,7 +225,7 @@ def run_normal(case: dict[str, Any], index: int) -> dict[str, Any]:
             and result["trace"]["steps"][-1]["tool"] == "hub.verify_results"
         )
         return {
-            "id": f"normal-{index:02d}", "class": "normal", "question": case["question"],
+            "id": f"{case_class}-{index:02d}", "class": case_class, "question": case["question"],
             "expected_tools": case["expected_tools"], "actual_tools": actual_tools,
             "expected_arguments": case["expected_arguments"], "actual_arguments": actual_args,
             "tool_selection_correct": actual_tools == case["expected_tools"],
@@ -183,7 +235,7 @@ def run_normal(case: dict[str, Any], index: int) -> dict[str, Any]:
         }
     except Exception as exc:
         return {
-            "id": f"normal-{index:02d}", "class": "normal", "question": case["question"],
+            "id": f"{case_class}-{index:02d}", "class": case_class, "question": case["question"],
             "expected_tools": case["expected_tools"], "actual_tools": [],
             "expected_arguments": case["expected_arguments"], "actual_arguments": [],
             "tool_selection_correct": False, "argument_accuracy": False,
@@ -404,12 +456,15 @@ def percentile(values: list[float], quantile: float) -> float:
 def main() -> int:
     started_at = datetime.now(timezone.utc).isoformat()
     results = [run_normal(case, index) for index, case in enumerate(normal_cases(), start=1)]
+    cross_tool_results = [run_normal(case, index) for index, case in enumerate(cross_tool_cases(), start=1)]
+    results.extend(cross_tool_results)
     results.extend(run_refusal_cases())
     results.extend(run_policy_cases())
-    if len(results) != 60:
-        raise RuntimeError(f"Expected 60 evaluation tasks, got {len(results)}.")
+    if len(results) != 80:
+        raise RuntimeError(f"Expected 80 evaluation tasks (60 existing + 20 cross-project), got {len(results)}.")
     timings = [float(item["latency_ms"]) for item in results]
     normals = [item for item in results if item["class"] == "normal"]
+    cross_tools = [item for item in results if item["class"] == "cross_tool"]
     refusals = [item for item in results if item["class"] in {"ambiguous", "unsupported", "injection"}]
     policy_cases = [item for item in results if item["class"].startswith((
         "unknown_tool", "malformed_arguments", "role_denial", "approval_required",
@@ -418,10 +473,17 @@ def main() -> int:
     tamper = run_tamper_trials()
     summary = {
         "task_count": len(results),
+        "original_benchmark_task_count": len(results) - len(cross_tools),
         "normal_task_count": len(normals),
         "tool_selection_accuracy": round(sum(bool(item["tool_selection_correct"]) for item in normals) / len(normals), 4),
         "argument_accuracy": round(sum(bool(item["argument_accuracy"]) for item in normals) / len(normals), 4),
         "end_to_end_success": round(sum(bool(item["end_to_end_success"]) for item in normals) / len(normals), 4),
+        "cross_tool_task_count": len(cross_tools),
+        "cross_tool_minimum_source_tools": min(len(item["expected_tools"]) for item in cross_tools),
+        "cross_tool_tool_selection_accuracy": round(sum(bool(item["tool_selection_correct"]) for item in cross_tools) / len(cross_tools), 4),
+        "cross_tool_argument_accuracy": round(sum(bool(item["argument_accuracy"]) for item in cross_tools) / len(cross_tools), 4),
+        "cross_tool_end_to_end_success": round(sum(bool(item["end_to_end_success"]) for item in cross_tools) / len(cross_tools), 4),
+        "cross_tool_trace_completeness": round(sum(bool(item["trace_complete"]) for item in cross_tools) / len(cross_tools), 4),
         "refusal_task_count": len(refusals),
         "correct_refusal_rate": round(sum(bool(item["correct_refusal"]) for item in refusals) / len(refusals), 4),
         "policy_denial_task_count": len(policy_cases),
@@ -438,7 +500,7 @@ def main() -> int:
         "llm_provider": "none",
         "ollama": "not run",
         "runtime_python": __import__("sys").version.split()[0],
-        "data_scope": "existing generated synthetic project assets; result values are not persisted in this report",
+        "data_scope": "generated synthetic project assets; result values are not persisted in this report",
         "task_count": len(results),
         "summary": summary,
         "tasks": results,
@@ -447,7 +509,13 @@ def main() -> int:
     EVAL_JSON.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     EVAL_MD.write_text(render_markdown(output), encoding="utf-8")
     print(json.dumps(summary, indent=2, sort_keys=True))
-    return 0 if summary["end_to_end_success"] == 1.0 and summary["correct_refusal_rate"] == 1.0 else 1
+    return 0 if (
+        summary["end_to_end_success"] == 1.0
+        and summary["cross_tool_end_to_end_success"] == 1.0
+        and summary["cross_tool_tool_selection_accuracy"] == 1.0
+        and summary["cross_tool_argument_accuracy"] == 1.0
+        and summary["correct_refusal_rate"] == 1.0
+    ) else 1
 
 
 def render_markdown(output: dict[str, Any]) -> str:
@@ -457,14 +525,21 @@ def render_markdown(output: dict[str, Any]) -> str:
         "",
         f"Measured: `{output['measured_at']}`. Planner mode: `{output['llm_provider']}`. Ollama: {output['ollama']}.",
         "",
-        f"The run used {output['task_count']} real Hub/runtime trials against generated synthetic project assets. "
+        f"The run repeated the original 60-task benchmark and added {summary['cross_tool_task_count']} cross-project "
+        f"Hub/runtime trials, for {output['task_count']} total, against generated synthetic project assets. "
         "The report stores plans, tool names, status, timings, and aggregate scores, but no result rows or customer content.",
         "",
         "| Metric | Measured result |",
         "|---|---:|",
-        f"| Tool-selection accuracy (40 normal tasks) | {summary['tool_selection_accuracy']:.4f} |",
-        f"| Argument accuracy (40 normal tasks) | {summary['argument_accuracy']:.4f} |",
-        f"| End-to-end success (40 normal tasks) | {summary['end_to_end_success']:.4f} |",
+        f"| Original benchmark tasks | {summary['original_benchmark_task_count']} |",
+        f"| Tool-selection accuracy (40 original normal tasks) | {summary['tool_selection_accuracy']:.4f} |",
+        f"| Argument accuracy (40 original normal tasks) | {summary['argument_accuracy']:.4f} |",
+        f"| End-to-end success (40 original normal tasks) | {summary['end_to_end_success']:.4f} |",
+        f"| Cross-project tasks (four source tools each) | {summary['cross_tool_task_count']} |",
+        f"| Cross-project tool-selection accuracy | {summary['cross_tool_tool_selection_accuracy']:.4f} |",
+        f"| Cross-project argument accuracy | {summary['cross_tool_argument_accuracy']:.4f} |",
+        f"| Cross-project end-to-end success | {summary['cross_tool_end_to_end_success']:.4f} |",
+        f"| Cross-project trace completeness | {summary['cross_tool_trace_completeness']:.4f} |",
         f"| Correct refusals (12 ambiguity/unsupported/injection tasks) | {summary['correct_refusal_rate']:.4f} |",
         f"| Policy-denial correctness ({summary['policy_denial_task_count']} policy tasks) | {summary['policy_denial_correctness']:.4f} |",
         f"| Trace completeness ({summary['trace_task_count']} execution tasks) | {summary['trace_completeness']:.4f} |",
@@ -474,7 +549,7 @@ def render_markdown(output: dict[str, Any]) -> str:
         "",
         "## Limits",
         "",
-        "This is a hand-authored, synthetic-data benchmark. Tool and argument accuracy measure only the listed prompts; the results do not estimate performance on arbitrary user requests or real business data. P50/p95 include planner refusals and short runtime policy fixtures. The timeout case intentionally waits for its one-second tool limit. The verifier tamper trials independently recompute BI values from the synthetic source; non-BI demo scores are re-run through their fixed scoring functions rather than an independent model implementation. LLM planning and Ollama were not tested.",
+        "This is a hand-authored, synthetic-data benchmark. The 20 cross-project cases each run inventory risk ranking, position, and forecast alongside one BI analysis, then verify all four results. Tool and argument accuracy measure only the listed prompts; the results do not estimate performance on arbitrary user requests or real business data. P50/p95 include planner refusals and short runtime policy fixtures. The timeout case intentionally waits for its one-second tool limit. The verifier tamper trials independently recompute BI values from the synthetic source; non-BI demo scores are re-run through their fixed scoring functions rather than an independent model implementation. LLM planning and Ollama were not tested.",
         "",
         "## Reproduce",
         "",

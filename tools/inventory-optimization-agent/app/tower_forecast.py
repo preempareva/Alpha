@@ -59,6 +59,27 @@ def _nonnegative(values: np.ndarray) -> np.ndarray:
     return np.maximum(clean, 0.0)
 
 
+@lru_cache(maxsize=256)
+def _cached_ets_forecast(series_values: tuple[float, ...], horizon: int) -> tuple[float, ...]:
+    """Reuse fitted ETS forecasts for repeated reads of the same fixed history."""
+    try:
+        from statsmodels.tsa.holtwinters import ExponentialSmoothing
+    except ImportError as exc:
+        raise ModelUnavailable("Statsmodels ETS is not installed.") from exc
+    series = np.asarray(series_values, dtype=float)
+    seasonal = "add" if series.size >= 104 else None
+    try:
+        fitted = ExponentialSmoothing(
+            series, trend="add", seasonal=seasonal,
+            seasonal_periods=52 if seasonal else None,
+            damped_trend=True, initialization_method="estimated",
+        ).fit(optimized=True, remove_bias=False)
+        values = _nonnegative(np.asarray(fitted.forecast(horizon), dtype=float))
+    except (ValueError, ArithmeticError, np.linalg.LinAlgError) as exc:
+        raise ModelUnavailable("ETS could not be fitted to this history.") from exc
+    return tuple(float(value) for value in values)
+
+
 def croston_sba(values: np.ndarray, horizon: int, alpha: float = 0.1) -> np.ndarray:
     series = _nonnegative(values)
     positive = np.flatnonzero(series > 0)
@@ -157,20 +178,9 @@ def forecast_points(
     elif model == "croston_sba":
         result = croston_sba(series, horizon)
     elif model == "ets":
-        try:
-            from statsmodels.tsa.holtwinters import ExponentialSmoothing
-        except ImportError as exc:
-            raise ModelUnavailable("Statsmodels ETS is not installed.") from exc
-        seasonal = "add" if series.size >= 104 else None
-        try:
-            fitted = ExponentialSmoothing(
-                series, trend="add", seasonal=seasonal,
-                seasonal_periods=52 if seasonal else None,
-                damped_trend=True, initialization_method="estimated",
-            ).fit(optimized=True, remove_bias=False)
-            result = np.asarray(fitted.forecast(horizon), dtype=float)
-        except (ValueError, ArithmeticError, np.linalg.LinAlgError) as exc:
-            raise ModelUnavailable("ETS could not be fitted to this history.") from exc
+        cached_horizon = max(horizon, 8)
+        series_key = tuple(float(value) for value in series)
+        result = np.asarray(_cached_ets_forecast(series_key, cached_horizon)[:horizon], dtype=float)
     elif model == "lightgbm_global":
         if panel is None or sku is None or location is None or cutoff is None:
             raise ValueError("The global challenger needs a panel, SKU, location, and cutoff date.")
