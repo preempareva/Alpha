@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
-$python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
+$venv = Join-Path (Split-Path -Parent $PSScriptRoot) '.venv'
+$python = Join-Path $venv 'Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) {
   $systemPython = Get-Command python -ErrorAction SilentlyContinue
   if (-not $systemPython) { throw 'Install Python 3.12 or newer, then run Alpha again.' }
@@ -8,7 +9,7 @@ if (-not (Test-Path -LiteralPath $python)) {
     throw 'Project Alpha requires Python 3.12 or newer.'
   }
   Write-Host 'Preparing Alpha once: creating a local environment and installing pinned requirements...' -ForegroundColor Yellow
-  & $systemPython.Source -m venv (Join-Path $PSScriptRoot '.venv')
+  & $systemPython.Source -m venv $venv
   if ($LASTEXITCODE -ne 0) { throw 'Could not create Alpha virtual environment.' }
   & $python -m pip install -r (Join-Path $PSScriptRoot 'requirements.lock')
   if ($LASTEXITCODE -ne 0) { throw 'Could not install Alpha requirements.' }

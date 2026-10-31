@@ -19,7 +19,7 @@ chmod +x ./run.sh   # first run only
 ./run.sh
 ```
 
-Then open <http://127.0.0.1:8000>. The launch script creates a local `.venv` and installs the pinned dependencies on first run. It seeds generated demo data and model files as needed. Press Ctrl+C in the terminal to stop the server.
+Then open <http://127.0.0.1:8000>. The launch script creates a shared `.venv` in the parent `ai projects` folder and installs the pinned dependencies on first run. It seeds generated demo data and model files as needed. Press Ctrl+C in the terminal to stop the server.
 
 ## Use the workspace
 
