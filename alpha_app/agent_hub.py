@@ -264,6 +264,59 @@ def _copilot_query(identity: AgentIdentity, arguments: dict[str, Any]) -> dict[s
     return copilot.SERVICE.query(identity, arguments["question"])
 
 
+def _inventory_components() -> tuple[Any, Any, Any]:
+    data = _module("tools.inventory-optimization-agent.app.tower_data")
+    logic = _module("tools.inventory-optimization-agent.app.tower_logic")
+    forecast = _module("tools.inventory-optimization-agent.app.tower_forecast")
+    return data, logic, forecast
+
+
+def _inventory_read(tool_name: str) -> Callable[[AgentIdentity, dict[str, Any]], Any]:
+    def execute(_identity: AgentIdentity, arguments: dict[str, Any]) -> Any:
+        data, logic, forecast = _inventory_components()
+        tables = data.load_tables()
+        if not data.validate_tables(tables)["valid"]:
+            raise ValueError("Synthetic inventory tables failed data-quality validation.")
+        if tool_name == "inventory.risk_ranking":
+            result = logic.risk_ranking(tables, arguments["horizon_weeks"], arguments["limit"])
+        elif tool_name == "inventory.position":
+            result = logic.inventory_position_report(tables, arguments["sku"], arguments["location"])
+        elif tool_name == "inventory.forecast":
+            result = forecast.forecast_series(
+                tables.sales_history, arguments["sku"], arguments["location"], arguments["horizon_weeks"]
+            )
+        elif tool_name == "inventory.simulate_scenario":
+            result = logic.simulate_scenarios(
+                tables, sku=arguments["sku"], location=arguments["location"],
+                replications=arguments["replications"], seed=arguments["seed"],
+            )
+        elif tool_name == "inventory.transfer_options":
+            result = logic.propose_transfers(tables, sku=arguments["sku"], limit=arguments["limit"])
+        else:
+            raise ValueError("Inventory tool is not registered.")
+        return logic.json_safe(result)
+    return execute
+
+
+def _inventory_propose(identity: AgentIdentity, arguments: dict[str, Any], context: ToolCallContext) -> Any:
+    data, logic, _forecast = _inventory_components()
+    tables = data.load_tables()
+    if not data.validate_tables(tables)["valid"]:
+        raise ValueError("Synthetic inventory tables failed data-quality validation.")
+    return logic.make_replenishment_draft(
+        tables, identity, context.idempotency_key, arguments["sku"], arguments["location"],
+        arguments.get("budget"),
+    )
+
+
+def _inventory_simulate(identity: AgentIdentity, arguments: dict[str, Any], context: ToolCallContext) -> Any:
+    _data, logic, _forecast = _inventory_components()
+    result = logic.ProposalStore().simulate(
+        identity, arguments["proposal_id"], context.idempotency_key
+    )
+    return logic.json_safe(result)
+
+
 TOOL_WORKERS: dict[str, Callable[..., Any]] = {}
 TOOL_LABELS: dict[str, str] = {}
 
@@ -368,6 +421,66 @@ def build_registry() -> ToolRegistry:
     register_read("copilot.query", "Run verified, parameterized analysis against the caller's confirmed dataset.",
                   _schema({"question": {"type": "string", "minLength": 4, "maxLength": 1000}}, ["question"]),
                   _copilot_query, data_label="USER_SCOPED", max_rows=100)
+    sku_schema = {"type": "string", "pattern": r"^SKU-\d{3}$"}
+    location_schema = {"type": "string", "pattern": r"^LOC-\d{3}$"}
+    register_read("inventory.risk_ranking", "Rank synthetic inventory positions by projected stock risk.",
+                  _schema({"horizon_weeks": {"type": "integer", "minimum": 1, "maximum": 26},
+                           "limit": {"type": "integer", "minimum": 1, "maximum": 20}},
+                          ["horizon_weeks", "limit"]),
+                  _inventory_read("inventory.risk_ranking"), max_rows=20)
+    register_read("inventory.position", "Read sellable stock, inbound, backorders, supplier and cover for a synthetic SKU/location.",
+                  _schema({"sku": sku_schema, "location": location_schema}, ["sku", "location"]),
+                  _inventory_read("inventory.position"), max_rows=1)
+    register_read("inventory.forecast", "Read an empirical-residual demand forecast for a synthetic SKU/location.",
+                  _schema({"sku": sku_schema, "location": location_schema,
+                           "horizon_weeks": {"type": "integer", "minimum": 1, "maximum": 8}},
+                          ["sku", "location", "horizon_weeks"]),
+                  _inventory_read("inventory.forecast"), max_rows=8)
+    register_read("inventory.simulate_scenario", "Compare fixed-seed synthetic inventory policies under disruption scenarios.",
+                  _schema({"sku": sku_schema, "location": location_schema,
+                           "replications": {"type": "integer", "minimum": 20, "maximum": 500},
+                           "seed": {"type": "integer", "const": 20261101}},
+                          ["sku", "location", "replications", "seed"]),
+                  _inventory_read("inventory.simulate_scenario"), max_rows=6)
+    register_read("inventory.transfer_options", "Read feasible synthetic transfers bounded by surplus, shortage, route time and cost.",
+                  _schema({"sku": {"type": "string", "pattern": r"^SKU-\d{3}$"},
+                           "limit": {"type": "integer", "minimum": 1, "maximum": 20}},
+                          ["sku", "limit"]),
+                  _inventory_read("inventory.transfer_options"), max_rows=20)
+
+    def register_draft(name: str, description: str, schema: dict[str, Any], worker: Callable[..., Any]) -> None:
+        TOOL_WORKERS[name] = worker
+        TOOL_LABELS[name] = "SYNTHETIC"
+
+        async def handler(identity: AgentIdentity, arguments: dict[str, Any], *,
+                          context: ToolCallContext) -> dict[str, Any]:
+            started = time.perf_counter()
+            raw = await asyncio.to_thread(worker, identity, arguments, context)
+            elapsed_ms = (time.perf_counter() - started) * 1000
+            EVIDENCE.record(context.run_id, context.call_id,
+                            EvidenceEntry(name, arguments, raw, elapsed_ms))
+            return {"tool_result_id": context.call_id, "tool": name,
+                    "data": _mark_evidence(raw, context.call_id), "data_label": "SYNTHETIC",
+                    "elapsed_ms": round(elapsed_ms, 3)}
+
+        registry.register(ToolSpec(
+            name=name, description=description, input_schema=schema,
+            output_schema={"type": "object"}, module=__name__, allowed_roles=ANALYST_ROLES,
+            side_effect="draft", requires_approval=True, timeout_seconds=READ_TOOL_TIMEOUT_SECONDS,
+            max_rows=20, max_bytes=150_000,
+        ), handler, module=__name__)
+
+    register_draft("inventory.propose_replenishment",
+                    "Create a local replenishment draft only after persisted human approval.",
+                    _schema({"sku": sku_schema, "location": location_schema,
+                             "budget": {"type": "number", "minimum": 0}}, ["sku", "location"]),
+                    _inventory_propose)
+    register_draft("inventory.simulate_execution",
+                    "Record an isolated simulated execution only after persisted human approval; never place an order.",
+                    _schema({"proposal_id": {"type": "string", "pattern":
+                                              r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-"
+                                              r"[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"}},
+                            ["proposal_id"]), _inventory_simulate)
     register_read("hub.verify_results", "Independently check evidence returned by the planned tools.", _schema({
         "source_call_ids": {"type": "array", "items": {"type": "string", "minLength": 1},
                             "minItems": 1, "maxItems": MAX_ANALYSIS_STEPS, "uniqueItems": True},
@@ -416,6 +529,20 @@ async def _verify_sources(
                     and isinstance(expected, dict) and expected.get("verified") is True
                     and _json_equal(entry.raw.get("rows"), expected.get("rows"))
                 )
+            elif entry.tool_name == "inventory.propose_replenishment":
+                _data, inventory, _forecast = _inventory_components()
+                expected = await asyncio.to_thread(
+                    inventory.ProposalStore().get, identity, str(entry.raw.get("proposal_id", ""))
+                ) if isinstance(entry.raw, dict) else None
+                verified = isinstance(expected, dict) and _json_equal(entry.raw, expected)
+            elif entry.tool_name == "inventory.simulate_execution":
+                _data, inventory, _forecast = _inventory_components()
+                proposal_id = str(entry.raw.get("proposal_id", "")) if isinstance(entry.raw, dict) else ""
+                expected_proposal = await asyncio.to_thread(
+                    inventory.ProposalStore().get, identity, proposal_id
+                ) if proposal_id else None
+                expected = expected_proposal.get("simulation") if isinstance(expected_proposal, dict) else None
+                verified = isinstance(expected, dict) and _json_equal(entry.raw, expected)
             else:
                 worker = TOOL_WORKERS[entry.tool_name]
                 expected = await asyncio.to_thread(worker, identity, entry.arguments)
@@ -471,6 +598,53 @@ def deterministic_plan(question: str) -> AgentPlan:
                 calls.append(ToolCall(tool_name="copilot.profile", arguments={}))
             else:
                 calls.append(ToolCall(tool_name="copilot.query", arguments={"question": clause[:1000]}))
+            continue
+        inventory_domain = (
+            bool(tokens.intersection({"inventory", "stock", "stockout", "replenishment", "supplier",
+                                      "transfer", "sku", "skus"}))
+            or bool(re.search(r"\bskus?\s+(?:are\s+)?at\s+risk\b", clause))
+        )
+        if inventory_domain:
+            sku_match = re.search(r"\bSKU-\d{3}\b", clause, re.IGNORECASE)
+            location_match = re.search(r"\bLOC-\d{3}\b", clause, re.IGNORECASE)
+            sku = sku_match.group(0).upper() if sku_match else "SKU-001"
+            location = location_match.group(0).upper() if location_match else "LOC-001"
+            horizon_match = re.search(r"\b(\d{1,2})\s+weeks?\b", clause)
+            horizon = min(int(horizon_match.group(1)), 8) if horizon_match else 6
+            proposal_match = re.search(
+                r"\bproposal\s+([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b",
+                clause, re.IGNORECASE,
+            )
+            if "simulate" in tokens and "execution" in tokens and proposal_match:
+                calls.append(ToolCall(tool_name="inventory.simulate_execution", arguments={
+                    "proposal_id": proposal_match.group(1),
+                }))
+            elif tokens.intersection({"draft", "propose", "replenishment"}) and "scenario" not in tokens:
+                arguments: dict[str, Any] = {"sku": sku, "location": location}
+                budget_match = re.search(r"\bbudget\s+(\d+(?:\.\d{1,2})?)\b", clause)
+                if budget_match:
+                    arguments["budget"] = float(budget_match.group(1))
+                calls.append(ToolCall(tool_name="inventory.propose_replenishment", arguments=arguments))
+            elif tokens.intersection({"scenario", "scenarios", "spike", "delay", "delayed"}):
+                calls.append(ToolCall(tool_name="inventory.simulate_scenario", arguments={
+                    "sku": sku, "location": location, "replications": 200, "seed": 20261101,
+                }))
+            elif "transfer" in tokens:
+                calls.append(ToolCall(tool_name="inventory.transfer_options", arguments={
+                    "sku": sku, "limit": 20,
+                }))
+            elif tokens.intersection({"risk", "risky", "stockout", "shortage", "cover", "weeks"}) or "at risk" in clause:
+                calls.extend((
+                    ToolCall(tool_name="inventory.risk_ranking", arguments={
+                        "horizon_weeks": horizon, "limit": 20,
+                    }),
+                    ToolCall(tool_name="inventory.position", arguments={"sku": sku, "location": location}),
+                    ToolCall(tool_name="inventory.forecast", arguments={
+                        "sku": sku, "location": location, "horizon_weeks": horizon,
+                    }),
+                ))
+            else:
+                calls.append(ToolCall(tool_name="inventory.position", arguments={"sku": sku, "location": location}))
             continue
         sales_domain = bool(tokens.intersection({"opportunity", "pipeline", "win", "crm"}))
         demand_domain = bool(tokens.intersection({"forecast", "demand"})) and not sales_domain
@@ -552,8 +726,14 @@ def _verified_plan(plan: AgentPlan) -> AgentPlan:
 
 def plan_hub(question: str) -> PlanningResult:
     _preflight(question)
+    if re.search(r"\b(?:draft|propose|simulate execution)\b", question, re.IGNORECASE) and re.search(
+        r"\b(?:inventory|replenishment|sku|stock)\b", question, re.IGNORECASE
+    ):
+        return PlanningResult(plan=_verified_plan(deterministic_plan(question)), mode="deterministic")
     fallback: PlannerWithMode = HubDeterministicPlanner()
-    planner = LLMPlanner(fallback, tool_names=tuple(name for name in TOOL_NAMES if name != "hub.verify_results"))
+    readonly = tuple(item.spec.name for item in REGISTRY
+                     if item.spec.name != "hub.verify_results" and item.spec.side_effect == "read")
+    planner = LLMPlanner(fallback, tool_names=readonly)
     planning = planner.plan_with_mode(question)
     return PlanningResult(plan=_verified_plan(planning.plan), mode=planning.mode)
 

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10231e">
+  <title>Inventory Control Tower · Project Alpha</title>
+  <script src="/static/inventory.js" defer></script>
+</head>
+<body>
+  <div id="inventory-app" data-api-base="/tools/replenishment">
+    <main class="tower-shell">
+      <header class="tower-top">
+        <a class="tower-brand" href="/">ALPHA <span>OPERATIONS</span></a>
+        <span class="synthetic-pill">SYNTHETIC DATA</span>
+      </header>
+      <section class="tower-hero">
+        <div>
+          <p class="eyebrow">INVENTORY CONTROL TOWER <span>01 / 05</span></p>
+          <h1>See the risk.<br><em>Choose the response.</em></h1>
+          <p class="tower-lede">Demand signals, sellable stock, supplier exposure and transfer options in one review workflow. Every number is synthetic; actions stop at an approved simulation.</p>
+          <div class="tower-flow"><span>Validate</span><i>→</i><span>Forecast</span><i>→</i><span>Review options</span><i>→</i><span>Approve</span><i>→</i><span>Simulate</span></div>
+        </div>
+        <aside class="tower-health"><small>DATA QUALITY</small><strong id="quality-status">Checking…</strong><span id="quality-detail">Validating fixed-seed tables</span></aside>
+      </section>
+      <nav class="tower-tabs" aria-label="Inventory workflow">
+        <button class="active" data-tab="risk">Risk & forecast</button>
+        <button data-tab="scenarios">Scenario tradeoffs</button>
+        <button data-tab="transfers">Transfer options</button>
+        <button data-tab="approvals">Drafts & approvals</button>
+      </nav>
+      <section class="tower-panel active" id="panel-risk">
+        <div class="panel-heading">
+          <div><p class="eyebrow">DEMAND + POSITION</p><h2>What needs a closer look?</h2></div>
+          <div class="toolbar">
+            <label>SKU <select id="sku"><option>SKU-001</option></select></label>
+            <label>Location <select id="location"><option>LOC-001</option></select></label>
+            <button class="button-primary" id="refresh-risk">Refresh analysis</button>
+          </div>
+        </div>
+        <div class="metric-grid" id="inventory-metrics">
+          <article><small>Sellable stock</small><strong>—</strong><span>on hand less reserved and blocked</span></article>
+          <article><small>Inventory position</small><strong>—</strong><span>plus confirmed inbound less backorders</span></article>
+          <article><small>Days of cover</small><strong>—</strong><span>against selected demand baseline</span></article>
+          <article><small>Supplier lead time</small><strong>—</strong><span>days · synthetic supplier profile</span></article>
+        </div>
+        <div class="content-grid detail-grid">
+          <article class="tower-card stock-card"><div class="card-title"><div><small>STOCK POSITION</small><h3>Where the units sit</h3></div></div><div id="stock-breakdown"><p class="empty-state">Stock components load with the selected SKU.</p></div></article>
+          <article class="tower-card supplier-card"><div class="card-title"><div><small>SUPPLIER + INBOUND</small><h3>Expected deliveries</h3></div><span id="supplier-caption">Synthetic profile</span></div><div id="purchase-orders" class="table-wrap"><p class="empty-state">Purchase order status loads with the selected SKU.</p></div></article>
+        </div>
+        <div class="content-grid">
+          <article class="tower-card forecast-card">
+            <div class="card-title"><div><small>WEEKLY DEMAND</small><h3>Six week forecast</h3></div><span id="forecast-model" class="status-pill">—</span></div>
+            <div id="forecast-chart" class="forecast-chart" aria-live="polite"><p class="empty-state">Select a SKU and location to review its forecast band.</p></div>
+            <div class="chart-legend"><span><i class="legend-range"></i> empirical 10–90% range</span><span><i class="legend-line"></i> median estimate</span></div>
+          </article>
+          <article class="tower-card risk-card">
+            <div class="card-title"><div><small>PRIORITIZED REVIEW</small><h3>Risk-ranked positions</h3></div><span>6 weeks</span></div>
+            <div id="risk-table" class="table-wrap"><p class="empty-state">Risk rows will appear after validation.</p></div>
+          </article>
+        </div>
+        <article class="tower-card excess-card"><div class="card-title"><div><small>POLICY EXPOSURE</small><h3>Potential excess positions</h3></div><span id="excess-count">—</span></div><div id="excess-table" class="table-wrap"><p class="empty-state">Excess positions will appear after risk analysis.</p></div></article>
+        <div class="panel-heading option-heading"><div><p class="eyebrow">ACTIONS STAY IN REVIEW</p><h2>Request a replenishment draft</h2></div><div class="draft-controls"><label>Optional budget cap (USD)<input id="budget" type="number" min="0" step="0.01" placeholder="No cap"></label><button class="button-secondary" id="request-draft">Request approved draft</button></div></div>
+        <p class="fine-print">A Phase A persisted approval is required before a draft is saved. A second approval is required before its simulated execution. No live order, supplier message or external write is possible.</p>
+      </section>
+      <section class="tower-panel" id="panel-scenarios">
+        <div class="panel-heading"><div><p class="eyebrow">FIXED-SEED MONTE CARLO</p><h2>Compare policy tradeoffs</h2></div><button class="button-primary" id="run-scenarios">Compare 200 replications · 13 weeks</button></div>
+        <p class="fine-print">Lean, balanced and resilient buffers are compared under supplier delay and demand spike conditions. This screen presents tradeoffs, not one “optimal” setting.</p>
+        <div id="scenario-table" class="tower-card table-wrap"><p class="empty-state">Run the scenario comparison to load synthetic outcomes.</p></div>
+      </section>
+      <section class="tower-panel" id="panel-transfers">
+        <div class="panel-heading"><div><p class="eyebrow">NETWORK BALANCING</p><h2>Transfer options</h2></div><button class="button-primary" id="load-transfers">Find feasible transfers</button></div>
+        <p class="fine-print">Options are bounded by source surplus, destination shortage, route lead time and estimated transfer cost.</p>
+        <div id="transfer-table" class="tower-card table-wrap"><p class="empty-state">No transfer options loaded.</p></div>
+      </section>
+      <section class="tower-panel" id="panel-approvals">
+        <div class="panel-heading"><div><p class="eyebrow">PERSISTED APPROVAL QUEUE</p><h2>Drafts & approval decisions</h2></div><button class="button-secondary" id="refresh-approvals">Refresh</button></div>
+        <div id="approval-list" class="content-grid"><article class="tower-card"><p class="empty-state">Sign in to view your scoped approval queue.</p></article></div>
+        <div class="panel-heading option-heading"><div><p class="eyebrow">SAVED IN THIS ACCOUNT</p><h2>Replenishment drafts</h2></div></div>
+        <div id="proposal-list" class="content-grid"></div>
+      </section>
+      <div id="toast" class="tower-toast" role="status" aria-live="polite"></div>
+      <footer class="tower-footer"><span>PROJECT ALPHA · INVENTORY CONTROL TOWER</span><span>SIMULATED DATA · NO EXTERNAL EXECUTION</span></footer>
+    </main>
+  </div>
+</body>
+</html>

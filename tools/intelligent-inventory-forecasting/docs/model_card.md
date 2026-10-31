@@ -1,6 +1,6 @@
-# Forecast card
+# Legacy demand forecast card
 
-- **Grain:** Synthetic SKU/week.
-- **Baseline:** Mean of the last eight observed weeks; uncertainty range uses their standard deviation.
-- **Evaluation:** Last eight weeks held out in time and compared with a last-value naive baseline using MAE and empirical range coverage.
-- **Known gaps:** No seasonal model despite generated seasonality, no multiple rolling origins, no per-SKU aggregate report, intervals are not calibrated, and synthetic demand does not represent inventory operations.
+- **Route:** The original `demand` slug and `/api/forecast/{sku}` and `/api/backtest/{sku}` endpoints remain available.
+- **Unified workflow:** The user-facing inventory workflow now lives at the existing replenishment slug under **Inventory Control Tower**.
+- **Data:** Existing forecast API still reads its ignored fixed-seed synthetic `demand.csv`; it has no stock-on-hand or supplier truth.
+- **Limits:** This legacy endpoint retains its simple moving-average baseline and is not an operational forecast. The combined tower's model comparison, rolling-origin evaluation and empirical intervals are documented in `tools/inventory-optimization-agent/docs/model_card.md` and `docs/eval/inventory_forecast.md`.

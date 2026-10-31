@@ -34,6 +34,10 @@ The tool screens live in `static/`; the Alpha API shell is in `alpha_app/`; the 
 
 Business Data Copilot is the fourteenth tool. It supports small CSV/XLSX uploads, per-user workspace storage, a deterministic query planner, and independently checked read-only results. Its default benchmark uses clearly labelled synthetic data; user-uploaded data remains local to the configured workspace. See tools/business-data-copilot/README.md.
 
+## Inventory Control Tower
+
+The combined workflow is available under the existing Inventory Optimization slug. It validates six fixed-seed synthetic tables, compares naive, seasonal naive, moving-average, Statsmodels ETS and Croston SBA forecasts, reports rolling-origin error and empirical interval coverage, and presents policy scenarios and constrained transfer options. Proposal and simulated execution actions pause for persisted Alpha admin approvals; no purchase order or supplier message is sent. The old demand forecast and replenishment API paths remain mounted. See `tools/inventory-optimization-agent/README.md` and `docs/inventory_formulas.md`.
+
 ## Data and model boundaries
 
 Generated examples are fictional and labelled synthetic in the tools. Travel itineraries use a fictional activity catalog; a user-triggered weather lookup can use Open-Meteo and shows attribution. Forecast, scoring, grouping, sentiment, and investigation results are demonstrations for review. Do not use them as real business decisions without replacing the sample data and validating the approach.

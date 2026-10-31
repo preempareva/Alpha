@@ -22,3 +22,11 @@
 - XLSX formulas are read as formula text, not evaluated. Macro projects, external links, embedded objects, unsafe paths, and oversized expanded archives are rejected.
 - Copilot's local Ollama planner requires COPILOT_LOCAL_PLANNER=1 in addition to the shared local provider configuration; default behavior is deterministic and offline.
 - Copilot files are not encrypted at rest. This residual risk is called out in the data card and threat model; host filesystem protection remains the local operator's responsibility.
+
+## Phase E decisions
+
+- The Inventory Control Tower extends the existing demand and replenishment tools. Their mounted slugs and existing API routes remain available; the combined screen is served at the existing replenishment slug.
+- Generated inventory tables use seed 20261101 and remain ignored. Analyses require the six-table validator to pass; evaluation reports aggregate metrics only.
+- Forecast selection is segment-specific and comes from the rolling-origin benchmark: minimum aggregate WAPE, then the simplest model within 2% of the best. Statsmodels ETS is pinned; LightGBM remains an optional guarded challenger.
+- Replenishment proposal and simulated execution are draft side effects gated by Alpha's persisted Phase A approvals. Their only mutation is a local user/workspace-scoped synthetic ledger; there is no external order execution.
+- Forecast intervals use training-only empirical residuals, and realized 10?90 coverage is reported by segment/horizon. Scenario outputs compare six combinations and do not name a single optimum.

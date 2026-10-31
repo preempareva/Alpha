@@ -29,7 +29,11 @@ def test_invalid_llm_provider_is_rejected(monkeypatch):
         Settings.from_env()
 
 
-def test_project_shell_exposes_every_tool_health_endpoint_and_request_id():
+def test_project_shell_exposes_every_tool_health_endpoint_and_request_id(tmp_path, monkeypatch):
+    generator = import_module("tools.inventory-optimization-agent.scripts.generate_tower_data")
+    tower_root = tmp_path / "synthetic-inventory"
+    generator.generate(tower_root)
+    monkeypatch.setenv("INVENTORY_TOWER_DATA_ROOT", str(tower_root))
     app_module = import_module("alpha_app.main")
     client = TestClient(app_module.app)
     response = client.get("/health", headers={"X-Request-ID": "alpha-check-1"})
@@ -48,7 +52,7 @@ def test_shell_uses_the_reviewed_product_labels_without_changing_slugs():
     projects = {item[0]: item[2] for item in app_module.PROJECTS}
     assert projects["helpdesk"] == "Helpdesk Triage"
     assert projects["bi"] == "BI Analyst Workflow"
-    assert projects["replenishment"] == "Replenishment Calculator"
+    assert projects["replenishment"] == "Inventory Control Tower"
     assert projects["sales-nudge"] == "Sales Follow-up Prioritizer"
     assert projects["incidents"] == "Incident Evidence Correlator (synthetic)"
     assert projects["segments"] == "Customer Segmentation"

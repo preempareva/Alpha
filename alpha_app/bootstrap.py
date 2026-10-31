@@ -19,6 +19,7 @@ SETUP = (
     ("customer-segmentation-agent", "data/generated/transactions.csv", ("generate_data",)),
     ("intelligent-inventory-forecasting", "data/generated/demand.csv", ("generate_data",)),
     ("inventory-optimization-agent", "data/generated/weekly_sales.csv", ("generate_data",)),
+    ("inventory-optimization-agent", "data/generated/tower/sales_history.csv", ("generate_tower_data",)),
     ("multi-agent-business-intelligence", "data/runtime/retail.db", ("seed_data",)),
     ("enterprise-knowledge-assistant", "instance/knowledge.db", ("seed_demo",)),
 )

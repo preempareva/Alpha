@@ -36,7 +36,7 @@ PROJECTS = [
     ("sales-forecast", "sales-pipeline-forecasting", "Sales forecast", "Estimate opportunity win probabilities for review.", "↗", "Insights"),
     ("sentiment", "customer-sentiment-intelligence", "Voice of customer", "Analyze a review and explore sentiment themes.", "◉", "Insights"),
     ("bi", "multi-agent-business-intelligence", "BI Analyst Workflow", "Ask questions against a controlled synthetic retail dataset.", "⌗", "Insights"),
-    ("replenishment", "inventory-optimization-agent", "Replenishment Calculator", "Review reorder proposals and backtest results.", "▦", "Plan"),
+    ("replenishment", "inventory-optimization-agent", "Inventory Control Tower", "Review synthetic demand, stock risk, transfer options, and approval-gated replenishment simulations.", "▦", "Plan"),
     ("sales-nudge", "ai-sales-nudge-agent", "Sales Follow-up Prioritizer", "Prioritize fictional leads and draft a follow-up for review.", "✉", "Work"),
     ("incidents", "ai-observability-investigator", "Incident Evidence Correlator (synthetic)", "Correlate synthetic logs, metrics, and traces.", "⌬", "Work"),
     ("quotes", "ai-supplier-quote-comparison", "Quote comparison", "Compare supplier offers with explicit cost and quality terms.", "⇄", "Plan"),
@@ -189,6 +189,6 @@ def home():
 
 @app.get("/static/{asset}")
 def static_asset(asset: str):
-    if asset not in {"app.css", "app.js", "agent-hub.js", "copilot.js"}:
+    if asset not in {"app.css", "app.js", "agent-hub.js", "copilot.js", "inventory.js", "inventory.css"}:
         raise HTTPException(status_code=404)
     return FileResponse(ROOT / "static" / asset)

@@ -17,8 +17,8 @@ Baseline was run on branch alpha-v2-build before changes for this master plan. T
 - [x] Phase A — Agent runtime hardening. Gate passed: 75 full-suite tests; 23 runtime tests; 12 Knowledge Assistant auth/access tests; scoped Ruff passed for core, app shell, and changed auth/runtime modules; mypy passed across 12 core source files; JavaScript syntax passed.
 - [x] Phase B — BI Analyst Workflow tool-using agent. Gate passed on the current synthetic dataset: full pytest 101 passed; changed-code Ruff passed; mypy passed for 13 Alpha core files and 6 BI source files; JS syntax passed; 40-case BI evaluation and 5 tamper trials completed.
 - [x] Phase C — Alpha Agent Hub. Gate passed: full pytest 119 passed, 7 warnings; scoped Ruff passed; mypy passed for 14 Alpha core/Hub files and 5 BI package source files; JavaScript syntax passed for both static files; 60-task HTTPX/API and runtime evaluation plus five BI tamper trials completed.
-- [ ] Phase D — Business Data Copilot.
-- [ ] Phase E — Inventory Control Tower.
+- [x] Phase D — Business Data Copilot. Gate passed: 135 full-suite tests; 16 Copilot-focused tests; scoped Ruff, core/BI/Copilot mypy, JS syntax, and the saved synthetic Copilot evaluation passed.
+- [x] Phase E — Inventory Control Tower. Gate passed: 154 full-suite tests; 19 inventory tests covered by the full run; scoped Ruff, core and inventory mypy, JS syntax, dependency consistency, and saved forecast/scenario evaluation passed.
 - [ ] Phase F — Hub wiring and expanded evaluation.
 - [ ] Phase G — Housekeeping, CI, docs consistency.
 - [ ] Phase H — Final self-audit and fresh-clone verification.
@@ -55,11 +55,6 @@ Added the authenticated Hub API and a vanilla JavaScript workspace screen with t
 - Evaluation metadata and per-task outcomes are in `docs/eval/agent_hub.json`; summary and limits are in `docs/eval/agent_hub.md`. No result rows or model/data contents are stored in the evaluation report.
 - Only Python 3.14 is available in this environment; the exact Python 3.12 runtime remains unverified.
 
-## Next action
-
-Begin Phase D1: implement the Business Data Copilot upload, profiling, and isolated synthetic workspace data path without changing the existing 13 projects.
-
-
 ## Phase D notes
 
 Added the Business Data Copilot as the fourteenth Alpha tool while preserving the existing thirteen slugs and route prefixes. It supports bounded CSV/XLSX uploads, in-memory schema previews, explicit schema confirmation, hashed owner/workspace DuckDB storage, session-bound CSRF, read-only typed queries, a SQLGlot SELECT guard, timeout/result caps, an independent pandas verifier, and formula-safe CSV export. Sensitive fields are removed from optional planner schemas, Hub profiles, confirmed previews, dimensions, filters, query labels, and audit plans; explicit aggregates are deterministic and use generic aliases. The shared Hub now registers copilot.profile and copilot.query.
@@ -73,6 +68,17 @@ Added the Business Data Copilot as the fourteenth Alpha tool while preserving th
 - DuckDB data is not encrypted at rest. This limitation is documented in the tool README, data card, threat model, and UI.
 - Only Python 3.14 is available in this environment; the Python 3.12 target remains unverified.
 
+## Phase E notes
+
+Merged the inventory forecasting and replenishment workflows into Inventory Control Tower while preserving both existing app slugs and the legacy `/api/backtest` and `/api/recommend` routes. Added a fixed-seed, validated synthetic dataset; Decimal-based ATP, safety-stock, reorder, MOQ/pack/budget/max-stock, coverage, and transfer calculations; rolling-origin baseline/ETS/Croston forecasts with empirical residual intervals; and fixed-seed lean/balanced/resilient scenario comparisons. Hub reads now include risk, position, forecast, scenario, and transfer tools. Replenishment drafts and their simulated execution remain owner-scoped, idempotent, locally recorded, and gated by separate persisted approvals. The combined workflow screen shows stock components, inbound purchase orders, excess positions, budget-aware drafts, transfers, and scenario tradeoffs.
+
+- Full test suite: **154 passed**, 7 dependency/deprecation warnings, using isolated temporary stores with `PYTHON_DOTENV_DISABLED=1` and `LLM_PROVIDER=none`.
+- Inventory test module: **19 tests**; all passed in the full run, including formula boundaries, leakage/interval checks, approvals, idempotency, existing routes, and shell integration.
+- Changed-code Ruff passed. Mypy passed for **14 Alpha core/Hub files** and **6 inventory source/script files**. `node --check static/inventory.js`, `git diff --check`, and `pip check` passed.
+- Forecast evaluation saved at `docs/eval/inventory_forecast.json` and `.md`: 36 horizon/segment metric groups and 6 scenario tradeoffs. The selected baselines were naive for intermittent demand and ETS for seasonal demand under the documented simplicity rule. Metrics use fixed-seed synthetic data only.
+- The standalone inventory legacy routes and both existing inventory slugs remain available. The local approval flow does not create or send real purchase orders.
+- Only Python 3.14 is available in this environment; Python 3.12 remains unverified. Browser-driven UI testing was not run.
+
 ## Next action
 
-Begin Phase E: implement the Inventory Control Tower against the existing synthetic inventory source, preserve both legacy app slugs/routes, and add formula/backtest/scenario gates before checkpointing.
+Begin Phase F: rerun the 60-task Agent Hub benchmark and add 20 evaluated cross-project tasks that each use at least three read tools, then update Hub demo and screenshot guidance.

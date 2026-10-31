@@ -1,0 +1,480 @@
+{
+  "backtest_metrics": [
+    {
+      "bias_units": 0.73684,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.94444,
+      "mase": 0.80915,
+      "model": "croston_sba",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.51677
+    },
+    {
+      "bias_units": 0.77657,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.94444,
+      "mase": 0.77342,
+      "model": "ets",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.4498
+    },
+    {
+      "bias_units": 0.5625,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.88889,
+      "mase": 0.79131,
+      "model": "moving_average",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.48333
+    },
+    {
+      "bias_units": 0.30556,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.75,
+      "mase": 0.64461,
+      "model": "naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.20833
+    },
+    {
+      "bias_units": -1.52778,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.80556,
+      "mase": 0.5557,
+      "model": "seasonal_naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.04167
+    },
+    {
+      "bias_units": -1.26316,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.83333,
+      "mase": 1.00597,
+      "model": "croston_sba",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.17858
+    },
+    {
+      "bias_units": -1.22568,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.83333,
+      "mase": 1.00945,
+      "model": "ets",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.18265
+    },
+    {
+      "bias_units": -1.4375,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.77778,
+      "mase": 1.01803,
+      "model": "moving_average",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.19271
+    },
+    {
+      "bias_units": -1.69444,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.63889,
+      "mase": 0.93801,
+      "model": "naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.09896
+    },
+    {
+      "bias_units": -2.25,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.69444,
+      "mase": 0.90245,
+      "model": "seasonal_naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.05729
+    },
+    {
+      "bias_units": -0.01316,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.91667,
+      "mase": 0.81953,
+      "model": "croston_sba",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.25407
+    },
+    {
+      "bias_units": 0.02146,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.91667,
+      "mase": 0.80788,
+      "model": "ets",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.23624
+    },
+    {
+      "bias_units": -0.1875,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.88889,
+      "mase": 0.78798,
+      "model": "moving_average",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.20578
+    },
+    {
+      "bias_units": -0.44444,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.63889,
+      "mase": 0.88022,
+      "model": "naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.34694
+    },
+    {
+      "bias_units": -2.11111,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.75,
+      "mase": 0.76464,
+      "model": "seasonal_naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 1.17007
+    },
+    {
+      "bias_units": 2.09795,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.97222,
+      "mase": 0.71812,
+      "model": "croston_sba",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 2.27518
+    },
+    {
+      "bias_units": 2.13124,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.97222,
+      "mase": 0.72076,
+      "model": "ets",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 2.28353
+    },
+    {
+      "bias_units": 1.92361,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.94444,
+      "mase": 0.67461,
+      "model": "moving_average",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 2.13732
+    },
+    {
+      "bias_units": 1.66667,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.66667,
+      "mase": 0.78242,
+      "model": "naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 2.47887
+    },
+    {
+      "bias_units": 3.02778,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.61111,
+      "mase": 0.93801,
+      "model": "seasonal_naive",
+      "n": 36,
+      "segment": "intermittent",
+      "wape": 2.97183
+    },
+    {
+      "bias_units": 0.91793,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.8,
+      "mase": 0.81277,
+      "model": "ets",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.37355
+    },
+    {
+      "bias_units": 0.85,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.77778,
+      "mase": 0.82942,
+      "model": "moving_average",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.38121
+    },
+    {
+      "bias_units": 0.3,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.72778,
+      "mase": 0.89998,
+      "model": "naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.41364
+    },
+    {
+      "bias_units": 0.41111,
+      "horizon_weeks": 1,
+      "interval_coverage_10_90": 0.71111,
+      "mase": 0.93224,
+      "model": "seasonal_naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.42847
+    },
+    {
+      "bias_units": 0.6457,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.8,
+      "mase": 0.75252,
+      "model": "ets",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.33446
+    },
+    {
+      "bias_units": 0.59444,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.77222,
+      "mase": 0.7645,
+      "model": "moving_average",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.33978
+    },
+    {
+      "bias_units": 0.04444,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.72778,
+      "mase": 0.89031,
+      "model": "naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.3957
+    },
+    {
+      "bias_units": 0.11667,
+      "horizon_weeks": 2,
+      "interval_coverage_10_90": 0.71667,
+      "mase": 0.91773,
+      "model": "seasonal_naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.40789
+    },
+    {
+      "bias_units": 0.76265,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.8,
+      "mase": 0.77866,
+      "model": "ets",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.35265
+    },
+    {
+      "bias_units": 0.73889,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.76667,
+      "mase": 0.802,
+      "model": "moving_average",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.36322
+    },
+    {
+      "bias_units": 0.18889,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.73333,
+      "mase": 0.89353,
+      "model": "naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.40467
+    },
+    {
+      "bias_units": 0.18889,
+      "horizon_weeks": 4,
+      "interval_coverage_10_90": 0.73333,
+      "mase": 0.8774,
+      "model": "seasonal_naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.39737
+    },
+    {
+      "bias_units": 0.21314,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.76111,
+      "mase": 0.80259,
+      "model": "ets",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.3399
+    },
+    {
+      "bias_units": 0.21111,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.73889,
+      "mase": 0.86773,
+      "model": "moving_average",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.36749
+    },
+    {
+      "bias_units": -0.33889,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.72222,
+      "mase": 0.91127,
+      "model": "naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.38593
+    },
+    {
+      "bias_units": -0.36111,
+      "horizon_weeks": 6,
+      "interval_coverage_10_90": 0.72778,
+      "mase": 0.84676,
+      "model": "seasonal_naive",
+      "n": 180,
+      "segment": "seasonal",
+      "wape": 0.35861
+    }
+  ],
+  "cutoff_backsteps_weeks": [
+    26,
+    13,
+    6
+  ],
+  "data_quality": {
+    "issue_codes": [],
+    "label": "SYNTHETIC",
+    "rows_by_table": {
+      "inventory_snapshot": 72,
+      "purchase_orders": 48,
+      "sales_history": 7488,
+      "sku_policy": 72,
+      "supplier": 8,
+      "transfers": 48
+    },
+    "tables_checked": 6,
+    "valid": true
+  },
+  "evaluation": "inventory-control-tower-forecast-v1",
+  "generated_at": "2026-10-31",
+  "horizons_weeks": [
+    1,
+    2,
+    4,
+    6
+  ],
+  "limits": [
+    "Hand-authored fixed-seed synthetic observations only.",
+    "Coverage and error metrics describe only the included panel and holdout schedule.",
+    "Scenario costs are illustrative; no operational or savings claims are supported.",
+    "No live purchase orders, supplier communications, or external execution occur."
+  ],
+  "mode": "SYNTHETIC",
+  "optional_lightgbm": "not installed; guarded optional challenger skipped",
+  "scenario_tradeoffs": [
+    {
+      "average_inventory_units": 37.59,
+      "condition": "supplier_delay",
+      "excess_units": 0.14,
+      "expedite_cost_estimate": "0.05",
+      "fill_rate": 0.9981,
+      "holding_cost_estimate": "5.50",
+      "order_frequency": 0.81,
+      "policy": "lean",
+      "replications": 200,
+      "stockout_days": 0.1
+    },
+    {
+      "average_inventory_units": 37.86,
+      "condition": "supplier_delay",
+      "excess_units": 0.15,
+      "expedite_cost_estimate": "0.05",
+      "fill_rate": 0.9992,
+      "holding_cost_estimate": "5.54",
+      "order_frequency": 0.97,
+      "policy": "balanced",
+      "replications": 200,
+      "stockout_days": 0.02
+    },
+    {
+      "average_inventory_units": 37.66,
+      "condition": "supplier_delay",
+      "excess_units": 0.03,
+      "expedite_cost_estimate": "0.10",
+      "fill_rate": 0.9997,
+      "holding_cost_estimate": "5.51",
+      "order_frequency": 1.08,
+      "policy": "resilient",
+      "replications": 200,
+      "stockout_days": 0.01
+    },
+    {
+      "average_inventory_units": 31.59,
+      "condition": "demand_spike",
+      "excess_units": 0.08,
+      "expedite_cost_estimate": "0.12",
+      "fill_rate": 0.9978,
+      "holding_cost_estimate": "4.62",
+      "order_frequency": 1.4,
+      "policy": "lean",
+      "replications": 200,
+      "stockout_days": 0.14
+    },
+    {
+      "average_inventory_units": 32.52,
+      "condition": "demand_spike",
+      "excess_units": 0.12,
+      "expedite_cost_estimate": "0.08",
+      "fill_rate": 0.9987,
+      "holding_cost_estimate": "4.76",
+      "order_frequency": 1.16,
+      "policy": "balanced",
+      "replications": 200,
+      "stockout_days": 0.07
+    },
+    {
+      "average_inventory_units": 32.52,
+      "condition": "demand_spike",
+      "excess_units": 0.04,
+      "expedite_cost_estimate": "0.12",
+      "fill_rate": 0.9994,
+      "holding_cost_estimate": "4.76",
+      "order_frequency": 1.5,
+      "policy": "resilient",
+      "replications": 200,
+      "stockout_days": 0.04
+    }
+  ],
+  "seed": 20261101,
+  "selected_models": {
+    "intermittent": "naive",
+    "seasonal": "ets"
+  },
+  "selection_rule": "lowest aggregate WAPE; select the simplest model within 2% of the best score",
+  "unavailable_fit_counts": {}
+}

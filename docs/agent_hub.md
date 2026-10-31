@@ -1,6 +1,6 @@
 # Alpha Agent Hub
 
-The Agent Hub is the shared, authenticated entry point for bounded read-only analysis across registered Alpha tools. The Phase C catalogue connects the BI Analyst Workflow, Knowledge Assistant search, synthetic sales and churn scores, and the demand demo. It does not make arbitrary project routes callable.
+The Agent Hub is the shared, authenticated entry point for bounded read and approval-gated draft actions across registered Alpha tools. The catalogue connects BI, Knowledge Assistant search, synthetic scoring, Business Data Copilot, demand, and Inventory Control Tower tools. It does not make arbitrary project routes callable.
 
 ## Request and execution flow
 
@@ -32,7 +32,7 @@ sequenceDiagram
 
 ## Tool contract
 
-Every tool is registered in `alpha_app/agent_hub.py` with an input schema, output schema, role scope, side-effect class, timeout, row cap, byte cap, and a fixed handler. All Phase C catalogue tools are `read`. The planner can select registered names and propose JSON arguments; it cannot provide code, SQL, identities, permissions, or handlers. `BoundedExecutor` revalidates the tool, caller identity, workspace, arguments, and side-effect policy immediately before dispatch. Plans are limited to four analysis calls plus one verifier call.
+Every tool is registered in `alpha_app/agent_hub.py` with an input schema, output schema, role scope, side-effect class, timeout, row cap, byte cap, and a fixed handler. Inventory proposal and simulation tools use `side_effect=draft` and persisted Phase A approvals. The planner can select registered names and propose JSON arguments; it cannot provide code, SQL, identities, permissions, or handlers. `BoundedExecutor` revalidates the tool, caller identity, workspace, arguments, and side-effect policy immediately before dispatch. Plans are limited to four analysis calls plus one verifier call.
 
 The current registry contains:
 
@@ -43,9 +43,12 @@ The current registry contains:
 | `sales_forecast.score_demo` | Sales pipeline scoring route | SYNTHETIC | Scores one of two fixed synthetic opportunity records. |
 | `churn.score_demo` | Churn scoring route | SYNTHETIC | Scores one of two fixed synthetic customer snapshots. |
 | `demand.forecast_demo` | Inventory forecasting function | SYNTHETIC | Reads an allowlisted SKU and a one-to-eight-week horizon. |
+| `inventory.risk_ranking`, `inventory.position`, `inventory.forecast`, `inventory.simulate_scenario`, `inventory.transfer_options` | Inventory Control Tower | SYNTHETIC | Bounded read calls for risk, stock position, demand, scenarios and transfer options. |
+| `inventory.propose_replenishment` | Owner-scoped draft ledger | SYNTHETIC | Draft side effect; Phase A persisted admin approval is required before the handler runs. |
+| `inventory.simulate_execution` | Owner-scoped draft ledger | SYNTHETIC | Second persisted approval; idempotent local simulation only, never a real order. |
 | `hub.verify_results` | Hub verifier | INTERNAL | Checks every source result before it can be returned as numeric data. |
 
-`hub.verify_results` independently recomputes BI results from the synthetic order source. For Knowledge Assistant, sales, churn, and demand tools, verification checks the result shape or re-runs the same fixed function; these checks are not independent model implementations. BI tamper trials are included in `docs/eval/agent_hub.json`.
+`hub.verify_results` independently recomputes BI results from the synthetic order source. For Knowledge Assistant, sales, churn, demand, and Inventory Control Tower reads, verification checks the result shape or re-runs the fixed source function; these checks are not independent model implementations. Inventory draft verification checks the owner-scoped saved draft/simulation. BI and Copilot tamper trials are recorded in their evaluation reports.
 
 ## Identity, sessions, and approvals
 
@@ -53,7 +56,7 @@ The Hub resolves the existing signed Knowledge Assistant cookie to an active use
 
 All Hub POST routes require a signed, user-bound CSRF token. They share a process-local sliding limit of 30 state-changing requests per user per minute. The UI fetches the token from `/api/agent/csrf` and sends it in `X-CSRF-Token`. Run submissions also carry an `Idempotency-Key`.
 
-The approval inbox and endpoints use the persisted approval ledger. Approval identity comes from the signed current session; the original requester's active role and groups are reloaded from the server user store before a paused plan resumes. The original user's identity executes the saved plan after an authorized admin approval. Approvals are tied to the run, call, plan hash, user, and workspace, expire, and are consumed once. There are no draft, write, or external tools in the Phase C registry; the approval route is exercised by a test-only draft tool and will become useful as later phases register reviewable proposals.
+The approval inbox and endpoints use the persisted approval ledger. Approval identity comes from the signed current session; the original requester's active role and groups are reloaded from the server user store before a paused plan resumes. The original user's identity executes the saved plan after an authorized admin approval. Approvals are tied to the run, call, plan hash, user, and workspace, expire, and are consumed once. Inventory draft tools are the only state-changing Hub tools. They save data only in a local, owner-scoped synthetic ledger; no external side effects are registered.
 
 ## Planning and response rules
 
@@ -80,3 +83,10 @@ The rate limiter and evidence cache are process-local, so this implementation is
 ## Phase D catalogue addition
 
 The catalogue now includes copilot.profile and copilot.query as read-only, user-scoped tools. They derive owner and workspace from the authenticated Alpha session. The profile tool hides sensitive columns and row previews; query output must pass Copilot's independent pandas verifier. The saved 60-task Agent Hub evaluation predates these additions; Phase F will rerun and extend it before reporting Hub metrics for the expanded catalogue.
+
+
+## Phase E Inventory Control Tower
+
+The inventory demo question, "Which SKUs are at risk over the next 6 weeks, why, and what should I review first?", deterministically selects `inventory.risk_ranking`, `inventory.position`, and `inventory.forecast` before `hub.verify_results`, satisfying the three-independent-tool cross-analysis flow. `inventory.propose_replenishment` is selected only for an explicit draft/propose request and always pauses for a persisted admin approval. After a draft is saved, `inventory.simulate_execution` requires a second approval and records only a local simulation. The requester cannot approve their own run.
+
+The combined screen lives at the existing replenishment slug; the original demand and replenishment APIs remain mounted. Scenario calls use a fixed seed and return tradeoffs for lean, balanced, and resilient policies under supplier-delay and demand-spike cases. See `docs/inventory_formulas.md` and `docs/eval/inventory_forecast.md`.

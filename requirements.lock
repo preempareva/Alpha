@@ -15,5 +15,12 @@ scikit-learn==1.8.0
 itsdangerous==2.2.0
 duckdb==2.0.0
 openpyxl==3.1.5
+statsmodels==0.15.0
+formulaic==1.2.2
+interface-meta==2.0.1
+narwhals==2.28.0
+patsy==1.0.3
+scipy==1.18.1
+wrapt==2.5.2
 sqlglot==30.27.0
 uvicorn[standard]==0.34.2
