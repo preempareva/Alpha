@@ -1,0 +1,8 @@
+[
+  {"question":"What is the domestic hotel claim limit?","expected_file":"travel-policy.md","answerable":true},
+  {"question":"How soon must travel claims be submitted?","expected_file":"travel-policy.md","answerable":true},
+  {"question":"How do I reset my password?","expected_file":"security-guide.md","answerable":true},
+  {"question":"What should I do with a suspicious email?","expected_file":"security-guide.md","answerable":true},
+  {"question":"When does benefits enrollment close?","expected_file":"hr-benefits.md","answerable":true},
+  {"question":"What is the private server root password?","expected_file":null,"answerable":false}
+]

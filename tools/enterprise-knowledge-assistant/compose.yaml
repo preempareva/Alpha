@@ -1,0 +1,19 @@
+services:
+  assistant:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_PATH: /var/lib/knowledge/knowledge.db
+      MAX_UPLOAD_BYTES: "10000000"
+      MIN_RETRIEVAL_SCORE: "0.35"
+    volumes:
+      - knowledge-data:/var/lib/knowledge
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  knowledge-data:

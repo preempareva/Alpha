@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.pytest_cache/
+artifacts/*.joblib
+data/generated/*.csv
+.env

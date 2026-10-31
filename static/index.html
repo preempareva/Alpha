@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c111b">
+  <title>Project Alpha | AI workspace</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#home" aria-label="Project Alpha home">
+        <span class="brand-mark">A<span>+</span></span>
+        <span><strong>ALPHA</strong><small>AI WORKSPACE</small></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span> Overview <span class="nav-count">13</span></button>
+      <div class="side-label section-label">YOUR TOOLS</div>
+      <div class="nav-list" id="navList"></div>
+      <div class="sidebar-bottom">
+        <span class="status-dot"></span><span>Local workspace</span><span class="shield">◈</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb"><span>Workspace</span><span class="slash">/</span><strong id="crumbTitle">Overview</strong></div>
+        <div class="top-right"><span class="live"><i></i> ALL SYSTEMS READY</span><span class="avatar">P</span></div>
+      </header>
+
+      <section id="homeView" class="page-view">
+        <div class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="spark">✳</span> YOUR AI TOOLKIT, IN ONE PLACE</div>
+            <h1>Good ideas.<br><span>One workspace.</span></h1>
+            <p>Explore, test, and work with your AI projects without hopping between apps.</p>
+            <button class="primary-button" id="exploreButton">Explore the workspace <span>↘</span></button>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+            <div class="planet"><span>α</span></div>
+            <div class="orbit-chip chip-one">✧ &nbsp; INSIGHTS</div><div class="orbit-chip chip-two">⌘ &nbsp; ACTION</div>
+            <div class="orbit-chip chip-three">◌ &nbsp; INTELLIGENCE</div>
+          </div>
+          <div class="hero-index">01 <span>/ 13</span></div>
+        </div>
+
+        <div class="section-heading" id="toolSection">
+          <div><div class="eyebrow muted">THE WORKSPACE</div><h2>Pick up where curiosity leads.</h2><p>Thirteen focused tools. One calm place to explore them.</p></div>
+          <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Find a tool..." aria-label="Find a tool"><kbd>/</kbd></div>
+        </div>
+        <div class="filter-row" id="filterRow">
+          <button class="filter active" data-filter="All">All tools <span>13</span></button>
+          <button class="filter" data-filter="Work">Work</button>
+          <button class="filter" data-filter="Plan">Planning</button>
+          <button class="filter" data-filter="Insights">Insights</button>
+        </div>
+        <div class="tool-grid" id="toolGrid"></div>
+        <footer class="footer"><span>PROJECT ALPHA <b>•</b> PERSONAL AI WORKSPACE</span><span>LOCAL DEMO DATA <b>·</b> BUILT FOR EXPLORATION</span></footer>
+      </section>
+
+      <section id="toolView" class="tool-view hidden">
+        <div class="tool-toolbar">
+          <button id="backButton" class="back-button"><span>←</span> All tools</button>
+          <div class="tool-title"><span id="activeIcon" class="tool-icon large"></span><div><h1 id="activeTitle"></h1><p id="activeDescription"></p></div></div>
+          <div class="tool-links"><a id="openDocs" class="docs-link" target="_blank" rel="noreferrer">API docs ↗</a></div>
+        </div>
+        <div id="toolStudio" class="tool-studio"></div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
