@@ -8,3 +8,5 @@
 - No pre-hardening commit existed when this prompt arrived. Continue on a dedicated alpha-v2-build branch and checkpoint only after a phase gate passes. Never push or merge.
 - Repo-wide Ruff currently reports 114 findings in legacy project files. New and touched core code must pass scoped Ruff; do not mass-reformat excluded applications to reduce the baseline count.
 - Keep all new runtime and evaluation behavior functional with LLM_PROVIDER=none; Ollama remains optional.
+- Knowledge Assistant's server-resolved user record has no workspace field. For the BI traces, use the authenticated user ID as the workspace ID to fail closed across users; administrators can inspect runs only within their own derived workspace until shared workspace membership is modeled.
+- Run BI's deterministic safety preflight before optional local planning. Unsupported or write-oriented prompts are refused before any model call, while an accepted model proposal remains subject to the runtime registry and policy.

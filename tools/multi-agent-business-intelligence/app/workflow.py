@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
-import re
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(__import__("os").getenv("BI_DATABASE_PATH", str(ROOT / "data/runtime/retail.db")))
@@ -28,7 +28,7 @@ TOOLS = {
 
 
 @contextmanager
-def connect_readonly():
+def connect_readonly() -> Iterator[sqlite3.Connection]:
     if not DB_PATH.exists():
         raise FileNotFoundError("Synthetic warehouse missing; run scripts/seed_data.py first.")
     db = sqlite3.connect(f"file:{DB_PATH.as_posix()}?mode=ro", uri=True)
@@ -40,7 +40,13 @@ def connect_readonly():
         db.close()
 
 
-def authorizer(action, arg1, arg2, db_name, trigger):
+def authorizer(
+    action: int,
+    arg1: str | None,
+    arg2: str | None,
+    db_name: str | None,
+    trigger: str | None,
+) -> int:
     # All writes, schema changes, attach and pragmas are rejected; reads limited to orders.
     if action in {sqlite3.SQLITE_READ} and arg1 == "orders":
         return sqlite3.SQLITE_OK
@@ -59,10 +65,10 @@ def route(question: str) -> str:
     raise ValueError("I can answer monthly revenue, top products, or refund-rate questions from this demo dataset.")
 
 
-def run_workflow(question: str) -> dict:
+def run_workflow(question: str) -> dict[str, Any]:
     if len(question.strip()) < 4 or len(question) > 500:
         raise ValueError("Question must be between 4 and 500 characters.")
-    trace = [{"agent": "router", "state": "started"}]
+    trace: list[dict[str, str | int]] = [{"agent": "router", "state": "started"}]
     tool = route(question)
     trace.append({"agent": "router", "state": "selected_tool", "tool": tool})
     if len(trace) >= MAX_STEPS:

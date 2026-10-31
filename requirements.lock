@@ -13,4 +13,5 @@ mypy==1.18.2
 python-multipart==0.0.32
 scikit-learn==1.8.0
 itsdangerous==2.2.0
+sqlglot==30.27.0
 uvicorn[standard]==0.34.2
