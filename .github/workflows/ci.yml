@@ -15,12 +15,29 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.lock
       - run: python -m pip install -r requirements.lock
-      - run: ruff check alpha_core
+      - run: ruff check alpha_core alpha_core/agent
       - run: mypy
+      - run: mypy alpha_core/agent
       - name: Build required synthetic model fixtures
         run: |
           python -m tools.customer-churn-prediction.scripts.generate_data
           python -m tools.customer-churn-prediction.scripts.train
           python -m tools.customer-sentiment-intelligence.scripts.generate_data
           python -m tools.customer-sentiment-intelligence.scripts.train
+      - name: Seed Knowledge Assistant retrieval benchmark
+        run: |
+          export ALPHA_DEMO_ALICE_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          export ALPHA_DEMO_BOB_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          export ALPHA_DEMO_ADMIN_PASSWORD="$(python -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          python -m tools.enterprise-knowledge-assistant.scripts.seed_demo
+      - name: Run Knowledge Assistant retrieval benchmark
+        run: python -m tools.enterprise-knowledge-assistant.scripts.evaluate
       - run: python -m pytest -q
+      - name: Upload retrieval evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: knowledge-retrieval-evaluation
+          path: tools/enterprise-knowledge-assistant/data/evaluation/ci_report.json
+          if-no-files-found: ignore
+          retention-days: 14

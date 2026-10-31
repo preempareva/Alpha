@@ -1,4 +1,4 @@
-﻿# AI Sales Nudge Agent
+﻿# Sales Follow-up Prioritizer
 
 Synthetic CRM demo that ranks leads using transparent recency and engagement rules and writes a suggested message as a draft. Drafts require an explicit local approval state; the project has no send/email/CRM integration.
 

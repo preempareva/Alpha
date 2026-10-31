@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="IT Helpdesk Assistant", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Helpdesk Triage", version="0.1.0", lifespan=lifespan)
 KB = [
     {"id":"kb-password","title":"Password reset","text":"Reset your own password using the company identity portal. Never share passwords or one-time codes with support."},
     {"id":"kb-vpn","title":"VPN connection","text":"Check your internet connection, restart the approved VPN client, and confirm the device clock is correct. Contact the service desk if the error continues."},
@@ -124,4 +124,4 @@ def approve(ticket_id: str):
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>IT Helpdesk Assistant</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem}textarea{width:100%;height:130px;padding:.6rem}button{padding:.7rem 1rem;background:#164e63;color:white;border:0;border-radius:5px}pre{white-space:pre-wrap;background:#f1f4f5;padding:1rem}</style></head><body><h1>IT Helpdesk Assistant</h1><p>Synthetic prototype: offers safe KB guidance and drafts a ticket for technician review.</p><form id=f><textarea id=q required minlength=12 placeholder='Describe your IT issue; do not include passwords or codes'></textarea><button>Get help / draft ticket</button></form><pre id=o aria-live=polite></pre><script>f.onsubmit=async e=>{e.preventDefault();let r=await fetch('/api/intake',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:q.value})});o.textContent=JSON.stringify(await r.json(),null,2)}</script></body></html>"""
+    return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Helpdesk Triage</title><style>body{font:16px system-ui;max-width:800px;margin:3rem auto;padding:0 1rem}textarea{width:100%;height:130px;padding:.6rem}button{padding:.7rem 1rem;background:#164e63;color:white;border:0;border-radius:5px}pre{white-space:pre-wrap;background:#f1f4f5;padding:1rem}</style></head><body><h1>Helpdesk Triage</h1><p>Synthetic prototype: offers safe KB guidance and drafts a ticket for technician review.</p><form id=f><textarea id=q required minlength=12 placeholder='Describe your IT issue; do not include passwords or codes'></textarea><button>Get help / draft ticket</button></form><pre id=o aria-live=polite></pre><script>f.onsubmit=async e=>{e.preventDefault();let r=await fetch('/api/intake',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({description:q.value})});o.textContent=JSON.stringify(await r.json(),null,2)}</script></body></html>"""

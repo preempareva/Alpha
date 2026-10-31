@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
  init()
  yield
 
-app=FastAPI(title='AI Sales Nudge Agent',version='0.1.0',lifespan=lifespan)
+app=FastAPI(title='Sales Follow-up Prioritizer',version='0.1.0',lifespan=lifespan)
 LEADS=[{'id':'SYN-LEAD-01','name':'Asha','stage':'evaluation','days_since_contact':12,'engagement_14d':1,'next_step':'share implementation checklist'}, {'id':'SYN-LEAD-02','name':'Ravi','stage':'discovery','days_since_contact':3,'engagement_14d':5,'next_step':'confirm team requirements'}, {'id':'SYN-LEAD-03','name':'Meera','stage':'proposal','days_since_contact':21,'engagement_14d':0,'next_step':'offer a proposal review'}]
 
 @contextmanager
@@ -57,4 +57,4 @@ def approve(draft_id:str):
  return {'draft_id':draft_id,'status':'APPROVED','notice':'Local approval recorded. Sending is not implemented.'}
 
 @app.get('/',response_class=HTMLResponse)
-def home():return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Sales Nudge Drafts</title><style>body{font:16px system-ui;max-width:850px;margin:3rem auto;padding:0 1rem}button{padding:.6rem;background:#164e63;color:white;border:0;border-radius:5px}article{padding:1rem;border:1px solid #ccd5dc;margin:.7rem 0}</style></head><body><h1>Sales nudge drafts</h1><p>Synthetic CRM. Suggestions are drafts for human review; no message can be sent.</p><button id=load>Load suggested next steps</button><section id=o></section><script>load.onclick=async()=>{let d=await(await fetch('/api/leads')).json();o.innerHTML=d.items.map(x=>`<article><b>${x.lead_id} · ${x.priority}</b><p>${x.reason}</p><p>${x.draft_message}</p></article>`).join('')}</script></body></html>"""
+def home():return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Sales Follow-up Prioritizer</title><style>body{font:16px system-ui;max-width:850px;margin:3rem auto;padding:0 1rem}button{padding:.6rem;background:#164e63;color:white;border:0;border-radius:5px}article{padding:1rem;border:1px solid #ccd5dc;margin:.7rem 0}</style></head><body><h1>Sales Follow-up Prioritizer</h1><p>Synthetic CRM. Suggestions are drafts for human review; no message can be sent.</p><button id=load>Load suggested next steps</button><section id=o></section><script>load.onclick=async()=>{let d=await(await fetch('/api/leads')).json();o.innerHTML=d.items.map(x=>`<article><b>${x.lead_id} · ${x.priority}</b><p>${x.reason}</p><p>${x.draft_message}</p></article>`).join('')}</script></body></html>"""

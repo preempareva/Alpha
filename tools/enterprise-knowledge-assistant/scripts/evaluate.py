@@ -7,6 +7,11 @@ import os
 from datetime import date
 from importlib import import_module
 from pathlib import Path
+import sys
+
+MIN_RECALL_AT_5 = 0.977
+MIN_ABSTENTION_ACCURACY = 1.0
+MAX_ACL_LEAKAGE_RATE = 0.0
 
 os.environ["LLM_PROVIDER"] = "none"
 module = import_module("tools.enterprise-knowledge-assistant.app.main")
@@ -68,6 +73,16 @@ metrics = {
         "Citation precision treats the single labelled source file as the relevant target.",
     ],
 }
+metrics["thresholds"] = {
+    "minimum_recall_at_5": MIN_RECALL_AT_5,
+    "minimum_abstention_accuracy": MIN_ABSTENTION_ACCURACY,
+    "maximum_acl_leakage_rate": MAX_ACL_LEAKAGE_RATE,
+}
+metrics["passed"] = (
+    metrics["recall_at_5"] >= MIN_RECALL_AT_5
+    and metrics["abstention_accuracy"] >= MIN_ABSTENTION_ACCURACY
+    and metrics["acl_leakage_rate"] <= MAX_ACL_LEAKAGE_RATE
+)
 
 lines = [
     "# Knowledge Assistant retrieval evaluation",
@@ -91,4 +106,9 @@ lines.extend(f"- {name}: {count}" for name, count in metrics["case_types"].items
 lines.extend(["", "## Limits", ""])
 lines.extend(f"- {item}" for item in metrics["limitations"])
 (ROOT / "docs" / "eval_knowledge.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+report_path = ROOT / "data" / "evaluation" / "ci_report.json"
+report_path.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(metrics, indent=2))
+if not metrics["passed"]:
+    print("Knowledge retrieval evaluation is below the recorded baseline.", file=sys.stderr)
+    raise SystemExit(1)

@@ -27,18 +27,18 @@ load_dotenv(ROOT / ".env", override=False)
 WORKSPACE = ROOT / "tools"
 PROJECTS = [
     ("knowledge", "enterprise-knowledge-assistant", "Knowledge assistant", "Search approved docs and get answers with source citations.", "⌕", "Work"),
-    ("helpdesk", "ai-it-helpdesk-assistant", "IT helpdesk", "Classify a support request and prepare a reviewable ticket.", "◈", "Work"),
+    ("helpdesk", "ai-it-helpdesk-assistant", "Helpdesk Triage", "Classify a support request and prepare a reviewable ticket.", "◈", "Work"),
     ("travel", "travel-itinerary-planner", "Trip planner", "Build an itinerary from a fictional activity catalog.", "✳", "Plan"),
     ("demand", "intelligent-inventory-forecasting", "Demand forecast", "Explore demand forecasts and a temporal backtest.", "⌁", "Plan"),
     ("churn", "customer-churn-prediction", "Churn signals", "Score synthetic accounts and inspect evaluation metrics.", "↘", "Insights"),
     ("sales-forecast", "sales-pipeline-forecasting", "Sales forecast", "Estimate opportunity win probabilities for review.", "↗", "Insights"),
     ("sentiment", "customer-sentiment-intelligence", "Voice of customer", "Analyze a review and explore sentiment themes.", "◉", "Insights"),
-    ("bi", "multi-agent-business-intelligence", "Business intelligence", "Ask questions against a controlled synthetic retail dataset.", "⌗", "Insights"),
-    ("replenishment", "inventory-optimization-agent", "Replenishment", "Review reorder proposals and backtest results.", "▦", "Plan"),
-    ("sales-nudge", "ai-sales-nudge-agent", "Sales follow-up", "Prioritize fictional leads and draft a follow-up for review.", "✉", "Work"),
-    ("incidents", "ai-observability-investigator", "Incident investigator", "Correlate synthetic logs, metrics, and traces.", "⌬", "Work"),
+    ("bi", "multi-agent-business-intelligence", "BI Analyst Workflow", "Ask questions against a controlled synthetic retail dataset.", "⌗", "Insights"),
+    ("replenishment", "inventory-optimization-agent", "Replenishment Calculator", "Review reorder proposals and backtest results.", "▦", "Plan"),
+    ("sales-nudge", "ai-sales-nudge-agent", "Sales Follow-up Prioritizer", "Prioritize fictional leads and draft a follow-up for review.", "✉", "Work"),
+    ("incidents", "ai-observability-investigator", "Incident Evidence Correlator (synthetic)", "Correlate synthetic logs, metrics, and traces.", "⌬", "Work"),
     ("quotes", "ai-supplier-quote-comparison", "Quote comparison", "Compare supplier offers with explicit cost and quality terms.", "⇄", "Plan"),
-    ("segments", "customer-segmentation-agent", "Customer segments", "Inspect aggregate RFM clusters from synthetic transactions.", "◌", "Insights"),
+    ("segments", "customer-segmentation-agent", "Customer Segmentation", "Inspect aggregate RFM clusters from synthetic transactions.", "◌", "Insights"),
 ]
 _weather_cache: dict[str, tuple[float, dict]] = {}
 

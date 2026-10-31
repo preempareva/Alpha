@@ -19,7 +19,7 @@ Open the unified workspace from project-alpha with powershell -NoProfile -Execut
 
 ## Evaluation and limits
 
-Run `python -m pytest`. The small, authored benchmark is in `data/evaluation/questions.json`; run `python scripts/evaluate.py` for Recall@5 and MRR. This measures retrieval only, not answer faithfulness or enterprise performance. Current baseline has no vector embeddings, OCR, external identity provider, multi-tenant database, or telemetry exporter. Scanned PDFs are marked for review. Do not upload confidential material to this demo.
+Run `python -m pytest`. The small, authored benchmark is in `data/evaluation/questions.json`; run `python scripts/evaluate.py` for Recall@5 and MRR. This measures retrieval only, not answer faithfulness or enterprise performance. Retrieval uses SQLite FTS5 and optional local Ollama embeddings. It has no OCR, external identity provider, multi-tenant database, or telemetry exporter. Scanned PDFs are marked for review. Do not upload confidential material to this demo.
 
 On the first run, the server terminal prints one-time passwords for Alice, Bob, and Admin. Set `ALPHA_DEMO_ALICE_PASSWORD`, `ALPHA_DEMO_BOB_PASSWORD`, and `ALPHA_DEMO_ADMIN_PASSWORD` before starting to choose passwords instead. The signed session cookie uses an ignored local secret file unless `KNOWLEDGE_SESSION_SECRET` is set.
 

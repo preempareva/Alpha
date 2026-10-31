@@ -1,4 +1,4 @@
-﻿# AI IT Helpdesk Assistant
+﻿# Helpdesk Triage
 
 Local synthetic-data prototype that classifies a help request, suggests an authored knowledge article, asks for missing context, and stores a ticket draft in `NEEDS_REVIEW`. A demo approval changes only local state; no ITSM system, account, or device is contacted.
 

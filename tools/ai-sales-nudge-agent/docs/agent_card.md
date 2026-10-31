@@ -1,4 +1,4 @@
-# Agent card
+# Sales Follow-up Prioritizer card
 
 - **Inputs:** Fictional lead stage, days since contact, recent engagement and human-authored next step.
 - **Decision:** A fixed transparent rule ranks review priority; draft text is a template filled with synthetic lead context.

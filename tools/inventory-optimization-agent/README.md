@@ -1,4 +1,4 @@
-﻿# Inventory Optimization Agent
+﻿# Replenishment Calculator
 
 Synthetic weekly demand and replenishment simulation. It reports a temporal last-eight-week backtest against simple baselines and produces a reorder-point recommendation from the recent 8-week mean, lead time, a configurable safety factor, and stock position. Every proposal is marked `NEEDS_APPROVAL`; the app cannot place orders.
 

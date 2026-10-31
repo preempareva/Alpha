@@ -1,4 +1,4 @@
-﻿# AI Observability Investigator
+﻿# Incident Evidence Correlator (synthetic)
 
 Local incident-investigation demo that correlates a small fictional event set across metric, log, and trace signals, produces a hypothesis with evidence, and proposes safe next checks. It never executes infrastructure changes.
 

@@ -1,4 +1,4 @@
-# Assistant card
+# Helpdesk Triage agent card
 
 - **Input:** User-written IT issue, 12–3,000 characters.
 - **Output:** Suggested category/priority, a deterministic KB match, missing-context prompts, and a ticket draft in `NEEDS_REVIEW`.

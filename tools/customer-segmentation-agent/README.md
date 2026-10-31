@@ -1,4 +1,4 @@
-﻿# Customer Segmentation Agent
+﻿# Customer Segmentation
 
 Exploratory RFM segmentation using locally generated synthetic transactions, log-scaled monetary value, standardized features, and k-means. The API returns aggregate profiles and a silhouette score. It does not infer sensitive traits, name individuals, export audiences, or automate targeting.
 

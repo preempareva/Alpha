@@ -1,4 +1,4 @@
-# Investigation card
+# Incident Evidence Correlator (synthetic) card
 
 - **Inputs:** Synthetic metric/log/trace events associated with a fixture incident ID.
 - **Process:** Group evidence, identify threshold-crossing signal, inspect nearby dependency events, write a bounded hypothesis and read-only checks.

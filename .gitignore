@@ -8,8 +8,10 @@ __pycache__/
 .ruff_cache/
 **/data/generated/*
 **/data/runtime/*
+**/data/evaluation/ci_report.json
 **/artifacts/*
 **/instance/*.db
 **/instance/session.secret
 **/test.db
 **/test_*.db
+*.zip

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import html
 import json
 import logging
 import os
@@ -17,11 +16,11 @@ from typing import Annotated
 import bcrypt
 import fitz
 from bs4 import BeautifulSoup
+from alpha_core.auth import InvalidSession, SignedSessionCodec
 from alpha_core.llm import LLMDisabled, get_provider
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
-from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(ROOT / "instance" / "knowledge.db")))
@@ -124,8 +123,10 @@ def _session_secret() -> str:
         return secret
 
 
-def _serializer() -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(_session_secret(), salt="alpha-knowledge-session-v1")
+def _session_codec() -> SignedSessionCodec:
+    return SignedSessionCodec(
+        _session_secret(), salt="alpha-knowledge-session-v1", max_age_seconds=SESSION_TTL_SECONDS
+    )
 
 
 def seed_demo_users() -> None:
@@ -189,11 +190,11 @@ def current_user(request: Request) -> dict:
     if not token:
         raise HTTPException(401, "Sign in to use the Knowledge Assistant.")
     try:
-        claims = _serializer().loads(token, max_age=SESSION_TTL_SECONDS)
-    except (BadSignature, SignatureExpired) as exc:
+        user_id = _session_codec().read_subject(token)
+    except InvalidSession as exc:
         raise HTTPException(401, "Your session has expired. Sign in again.") from exc
     with connect() as db:
-        row = db.execute("SELECT id,username,role,groups_json,active FROM users WHERE id=?", (claims.get("sub"),)).fetchone()
+        row = db.execute("SELECT id,username,role,groups_json,active FROM users WHERE id=?", (user_id,)).fetchone()
     if not row or not row["active"]:
         raise HTTPException(401, "This account is unavailable. Sign in again.")
     return {"id": row["id"], "username": row["username"], "role": row["role"],
@@ -392,7 +393,7 @@ def login(payload: LoginRequest, response: Response) -> dict:
         valid_password = False
     if not valid_password:
         raise HTTPException(401, "Username or password is incorrect.")
-    token = _serializer().dumps({"sub": row["id"]})
+    token = _session_codec().issue(row["id"])
     response.set_cookie(SESSION_COOKIE, token, max_age=SESSION_TTL_SECONDS, httponly=True,
                         secure=os.getenv("ALPHA_HTTPS", "0") == "1", samesite="lax", path="/")
     with connect() as db:

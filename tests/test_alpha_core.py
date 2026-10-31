@@ -43,6 +43,17 @@ def test_project_shell_exposes_every_tool_health_endpoint_and_request_id():
         assert client.get(f"/tools/{project_id}/health").status_code == 200
 
 
+def test_shell_uses_the_reviewed_product_labels_without_changing_slugs():
+    app_module = import_module("alpha_app.main")
+    projects = {item[0]: item[2] for item in app_module.PROJECTS}
+    assert projects["helpdesk"] == "Helpdesk Triage"
+    assert projects["bi"] == "BI Analyst Workflow"
+    assert projects["replenishment"] == "Replenishment Calculator"
+    assert projects["sales-nudge"] == "Sales Follow-up Prioritizer"
+    assert projects["incidents"] == "Incident Evidence Correlator (synthetic)"
+    assert projects["segments"] == "Customer Segmentation"
+
+
 def test_validation_errors_include_request_id():
     app_module = import_module("alpha_app.main")
     client = TestClient(app_module.app)

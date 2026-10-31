@@ -1,4 +1,4 @@
-# Forecast and recommendation card
+# Replenishment Calculator model card
 
 - **Data:** Locally generated synthetic weekly demand for eight SKUs over 104 weeks.
 - **Backtest:** Last eight observations held out; four-week mean and seasonal-naive reference, with MAE.

@@ -1,4 +1,4 @@
-﻿# Multi-Agent Business Intelligence System
+﻿# BI Analyst Workflow
 
 A controlled analyst workflow over a small synthetic retail dataset. A router selects from fixed, typed analysis tools; a read-only SQLite analyst executes parameterized queries; an independent verifier checks row shape and totals; a report writer summarizes the verified result. It does not generate arbitrary SQL, mutate data, or take business actions.
 

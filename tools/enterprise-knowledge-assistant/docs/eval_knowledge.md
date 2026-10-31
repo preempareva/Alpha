@@ -1,6 +1,6 @@
 # Knowledge Assistant retrieval evaluation
 
-Measured on **2026-10-31** using 127 authored questions over the seeded synthetic corpus.
+Measured on **2026-11-01** using 127 authored questions over the seeded synthetic corpus.
 The run uses deterministic FTS5 retrieval with LLM synthesis disabled.
 
 | Measure | Result |

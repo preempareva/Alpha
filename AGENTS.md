@@ -45,3 +45,12 @@ Fresh clone runs from documented commands; sources/licences recorded; baseline +
 ## Output format at end of each task
 
 Changed files, commands run + results, what's real vs simulated, remaining risks. Then stop and wait.
+
+## v2 addendum
+
+- Clean-room rule: APEX (`AI.zip`) is off-limits. Never read, copy or reference APEX code, data, hosts, schemas, branding or credentials. Build generic equivalents on synthetic/public data only.
+- Never read or print: `.env*`, `*.db`, `*.duckdb`, uploads, logs, model binaries, secrets. Use `.env.example` only.
+- Agent runtime rules: LLM output is untrusted. Server re-checks user, role, workspace, tool allowlist and side-effect policy immediately before every tool call. Max 5 plan steps, per-tool timeout, row/byte caps, fail closed. No raw SQL, shell, arbitrary Python or external writes from a model. Write/external actions pause for human approval.
+- LLM never calculates numbers. Forecasts, stock math, SQL and metrics come from tested code; the LLM only plans, explains and drafts.
+- Docs must match code. If behaviour changes, update README/architecture/agent card in the same commit.
+- On the dedicated alpha-v2-build branch, make one local checkpoint commit after each passed phase gate. Never push, merge, rebase, or force-push.

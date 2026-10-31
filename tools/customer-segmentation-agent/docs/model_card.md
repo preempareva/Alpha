@@ -1,4 +1,4 @@
-# Segmentation card
+# Customer Segmentation model card
 
 - **Input:** Synthetic transaction dates and amounts grouped by synthetic customer ID.
 - **Features:** Recency, transaction frequency, and log-scaled monetary sum.
