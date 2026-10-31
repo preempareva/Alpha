@@ -2,10 +2,10 @@
 
 ## Start
 
-1. Create and activate a Python virtual environment; install `requirements.txt`.
-2. Run `python scripts/seed_demo.py` to index the three authored synthetic sources.
-3. Start with `uvicorn app.main:app --host 127.0.0.1 --port 8000`.
-4. Visit `/`; `/health` is the process health endpoint and `/api/admin/status` shows local ingestion state.
+1. From the `project-alpha` root, run `./run.ps1` on Windows or `./run.sh` on Linux/macOS; this creates the environment and seeds the local demo assets.
+2. Open the printed local URL and copy the one-time demo passwords from the server terminal, or set `ALPHA_DEMO_*_PASSWORD` environment variables before startup.
+3. Sign in as `alice` or `bob` to search. Sign in as `admin` to upload/retire documents and view ingestion status.
+4. `/health` reports app readiness; the Knowledge Assistant `/api/admin/status` route requires the admin role.
 
 ## Recovery and maintenance
 
@@ -17,4 +17,4 @@
 
 ## Before any pilot
 
-Replace header-derived identity with verified authentication and group claims; protect admin routes; define retention/deletion and encrypted storage; add malware scanning, deployment hardening, monitoring, backups, and review with each source owner. These are release blockers for real organizational data.
+For a real organizational pilot, replace the local demo accounts with a verified identity provider and managed secrets; define retention/deletion and encrypted storage; add malware scanning, deployment hardening, monitoring, backups, and review with each source owner. These are release blockers for real organizational data.

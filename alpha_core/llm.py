@@ -44,7 +44,7 @@ class NoneProvider:
 class OllamaProvider:
     def __init__(self, model: str | None = None, base_url: str | None = None) -> None:
         self.model = model or os.getenv("OLLAMA_MODEL", "llama3.1:8b")
-        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")).rstrip("/")
+        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL") or "http://127.0.0.1:11434").rstrip("/")
 
     def complete(
         self,

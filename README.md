@@ -34,7 +34,7 @@ The tool screens live in `static/`; the Alpha API shell is in `alpha_app/`; the 
 
 Generated examples are fictional and labelled synthetic in the tools. Travel itineraries use a fictional activity catalog; a user-triggered weather lookup can use Open-Meteo and shows attribution. Forecast, scoring, grouping, sentiment, and investigation results are demonstrations for review. Do not use them as real business decisions without replacing the sample data and validating the approach.
 
-Alpha binds to localhost and currently has no authenticated user session. The Knowledge Assistant currently demonstrates group filtering using client-supplied demo headers, so it is not suitable for confidential documents or deployment. LLM use defaults to off (`LLM_PROVIDER=none`). The optional shared adapter supports local Ollama only; no paid LLM provider is included.
+Alpha binds to localhost. The Knowledge Assistant has local demo accounts with server-side roles and groups, but it is not an enterprise identity system and is not suitable for confidential documents or deployment. Its first run prints one-time demo passwords; copy `.env.example` to `.env` and set the `ALPHA_DEMO_*_PASSWORD` values before the first run to choose them. LLM use defaults to off (`LLM_PROVIDER=none`). The optional shared adapter supports local Ollama only; no paid LLM provider is included.
 
 ## Development checks
 

@@ -6,7 +6,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT / ".env", override=False)
 SETUP = (
     ("customer-churn-prediction", "artifacts/churn_pipeline.joblib", ("generate_data", "train")),
     ("customer-sentiment-intelligence", "artifacts/sentiment.joblib", ("generate_data", "train")),

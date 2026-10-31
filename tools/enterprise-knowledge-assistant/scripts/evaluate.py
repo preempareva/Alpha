@@ -3,13 +3,14 @@ from pathlib import Path
 from importlib import import_module
 
 module = import_module("tools.enterprise-knowledge-assistant.app.main")
-AskRequest, ask = module.AskRequest, module.ask
+AskRequest, retrieve = module.AskRequest, module.retrieve
+evaluator = {"id": "synthetic-evaluator", "groups": ["general", "finance", "hr", "security", "procurement"]}
 
 ROOT = Path(__file__).resolve().parents[1]
 cases = json.loads((ROOT / "data/evaluation/questions.json").read_text(encoding="utf-8"))
 recalls, reciprocal_ranks, abstain_ok = [], [], []
 for case in cases:
-    result = ask(AskRequest(question=case["question"], limit=5), "alice", "general,finance,hr")
+    result = retrieve(AskRequest(question=case["question"], limit=5), evaluator)
     files = [c["filename"] for c in result["citations"]]
     if case["expected_file"]:
         recalls.append(float(case["expected_file"] in files))

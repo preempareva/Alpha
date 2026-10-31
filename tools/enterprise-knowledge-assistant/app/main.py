@@ -5,6 +5,7 @@ import html
 import json
 import os
 import re
+import secrets
 import sqlite3
 import uuid
 from contextlib import asynccontextmanager, contextmanager
@@ -12,20 +13,25 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
+import bcrypt
 import fitz
 from bs4 import BeautifulSoup
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(ROOT / "instance" / "knowledge.db")))
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", "10000000"))
 MIN_SCORE = float(os.getenv("MIN_RETRIEVAL_SCORE", "0.35"))
+SESSION_TTL_SECONDS = 8 * 60 * 60
+SESSION_COOKIE = "alpha_knowledge_session"
 ALLOWED_EXTENSIONS = {".md", ".txt", ".html", ".pdf"}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    seed_demo_users()
     yield
 
 
@@ -74,6 +80,15 @@ def init_db() -> None:
           chunk_ids_json TEXT NOT NULL, rating INTEGER NOT NULL, reason TEXT,
           created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash BLOB NOT NULL,
+          role TEXT NOT NULL CHECK(role IN ('employee','admin')), groups_json TEXT NOT NULL,
+          active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS audit_events (
+          id TEXT PRIMARY KEY, user_id TEXT NOT NULL, action TEXT NOT NULL,
+          resource_id TEXT, details_json TEXT NOT NULL, created_at TEXT NOT NULL
+        );
         """)
 
 
@@ -82,9 +97,83 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def user_context(x_user_id: str = "demo-user", x_user_groups: str = "general") -> tuple[str, set[str]]:
-    groups = {g.strip() for g in x_user_groups.split(",") if g.strip()}
-    return x_user_id.strip() or "demo-user", groups
+def _session_secret() -> str:
+    secret = os.getenv("KNOWLEDGE_SESSION_SECRET")
+    if secret:
+        return secret
+    path = ROOT / "instance" / "session.secret"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        secret = secrets.token_urlsafe(48)
+        try:
+            path.write_text(secret, encoding="utf-8")
+        except FileExistsError:
+            secret = path.read_text(encoding="utf-8").strip()
+        return secret
+
+
+def _serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(_session_secret(), salt="alpha-knowledge-session-v1")
+
+
+def seed_demo_users() -> None:
+    """Create local demo accounts; generated passwords are printed only on first seed."""
+    users = (
+        ("alice", "employee", ["general", "finance"], "ALPHA_DEMO_ALICE_PASSWORD"),
+        ("bob", "employee", ["general"], "ALPHA_DEMO_BOB_PASSWORD"),
+        ("admin", "admin", ["general", "finance", "hr", "security", "procurement"], "ALPHA_DEMO_ADMIN_PASSWORD"),
+    )
+    generated = []
+    with connect() as db:
+        for username, role, groups, password_env in users:
+            exists = db.execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone()
+            if exists:
+                continue
+            password = os.getenv(password_env) or secrets.token_urlsafe(18)
+            hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+            user_id = str(uuid.uuid4())
+            db.execute("INSERT INTO users VALUES(?,?,?,?,?,1,?)",
+                       (user_id, username, hashed, role, json.dumps(groups), now()))
+            if not os.getenv(password_env):
+                generated.append(f"{username}: {password}")
+    if generated:
+        print("Project Alpha demo passwords (save these; they are shown only at initial seed): " + " | ".join(generated))
+
+
+def record_event(db: sqlite3.Connection, user: dict, action: str, resource_id: str | None = None,
+                 details: dict | None = None) -> None:
+    db.execute("INSERT INTO audit_events VALUES(?,?,?,?,?,?)", (
+        str(uuid.uuid4()), user["id"], action, resource_id,
+        json.dumps(details or {}, sort_keys=True), now()))
+
+
+def current_user(request: Request) -> dict:
+    token = request.cookies.get(SESSION_COOKIE)
+    if not token:
+        raise HTTPException(401, "Sign in to use the Knowledge Assistant.")
+    try:
+        claims = _serializer().loads(token, max_age=SESSION_TTL_SECONDS)
+    except (BadSignature, SignatureExpired) as exc:
+        raise HTTPException(401, "Your session has expired. Sign in again.") from exc
+    with connect() as db:
+        row = db.execute("SELECT id,username,role,groups_json,active FROM users WHERE id=?", (claims.get("sub"),)).fetchone()
+    if not row or not row["active"]:
+        raise HTTPException(401, "This account is unavailable. Sign in again.")
+    return {"id": row["id"], "username": row["username"], "role": row["role"],
+            "groups": json.loads(row["groups_json"])}
+
+
+def require_admin(user: dict = Depends(current_user)) -> dict:
+    if user["role"] != "admin":
+        raise HTTPException(403, "Administrator access is required for this action.")
+    return user
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=1, max_length=128)
 
 
 def extract(filename: str, raw: bytes) -> list[tuple[int | None, str]]:
@@ -201,7 +290,44 @@ class FeedbackRequest(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "time": now()}
+    try:
+        with connect() as db:
+            db.execute("SELECT 1").fetchone()
+        return {"status": "ok", "time": now(), "database": "ready"}
+    except sqlite3.Error:
+        return {"status": "error", "database": "unavailable"}
+
+
+@app.post("/api/login")
+def login(payload: LoginRequest, response: Response) -> dict:
+    with connect() as db:
+        row = db.execute("SELECT id,password_hash,active FROM users WHERE username=?", (payload.username.strip().casefold(),)).fetchone()
+    supplied = payload.password.encode("utf-8")
+    try:
+        valid_password = bool(row and row["active"] and bcrypt.checkpw(supplied, row["password_hash"]))
+    except ValueError:
+        valid_password = False
+    if not valid_password:
+        raise HTTPException(401, "Username or password is incorrect.")
+    token = _serializer().dumps({"sub": row["id"]})
+    response.set_cookie(SESSION_COOKIE, token, max_age=SESSION_TTL_SECONDS, httponly=True,
+                        secure=os.getenv("ALPHA_HTTPS", "0") == "1", samesite="lax", path="/")
+    with connect() as db:
+        record_event(db, {"id": row["id"]}, "login")
+    return {"status": "signed_in"}
+
+
+@app.post("/api/logout")
+def logout(response: Response, user: dict = Depends(current_user)) -> dict:
+    with connect() as db:
+        record_event(db, user, "logout")
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="lax")
+    return {"status": "signed_out"}
+
+
+@app.get("/api/me")
+def me(user: dict = Depends(current_user)) -> dict:
+    return {"user": user}
 
 
 @app.post("/api/documents")
@@ -210,7 +336,8 @@ async def upload_document(file: Annotated[UploadFile, File()], title: Annotated[
                           version: Annotated[str, Form()] = "1",
                           access_groups: Annotated[str, Form()] = "general",
                           effective_from: Annotated[str | None, Form()] = None,
-                          effective_to: Annotated[str | None, Form()] = None) -> dict:
+                          effective_to: Annotated[str | None, Form()] = None,
+                          user: dict = Depends(require_admin)) -> dict:
     raw = await file.read(MAX_UPLOAD_BYTES + 1)
     if len(raw) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, "File exceeds the configured upload limit.")
@@ -218,8 +345,11 @@ async def upload_document(file: Annotated[UploadFile, File()], title: Annotated[
         for value in (effective_from, effective_to):
             if value:
                 date.fromisoformat(value)
-        return ingest(file.filename or "upload.txt", raw, title.strip(), owner.strip(), version.strip(),
-                      [g.strip() for g in access_groups.split(",") if g.strip()], effective_from, effective_to)
+        result = ingest(file.filename or "upload.txt", raw, title.strip(), owner.strip(), version.strip(),
+                        [g.strip() for g in access_groups.split(",") if g.strip()], effective_from, effective_to)
+        with connect() as db:
+            record_event(db, user, "document.upload", result["document_id"], {"filename": file.filename, "title": title.strip()})
+        return result
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     except sqlite3.IntegrityError as exc:
@@ -227,9 +357,12 @@ async def upload_document(file: Annotated[UploadFile, File()], title: Annotated[
 
 
 @app.post("/api/ask")
-def ask(payload: AskRequest, x_user_id: Annotated[str, Header()] = "demo-user",
-        x_user_groups: Annotated[str, Header()] = "general") -> dict:
-    user_id, groups = user_context(x_user_id, x_user_groups)
+def ask(payload: AskRequest, user: dict = Depends(current_user)) -> dict:
+    return retrieve(payload, user)
+
+
+def retrieve(payload: AskRequest, user: dict) -> dict:
+    groups = sorted(set(user["groups"]))
     stop_words = {"what", "which", "when", "where", "who", "how", "is", "are", "the", "a", "an", "of", "to", "for", "in", "on", "i", "do", "does", "can", "my", "me", "please", "tell"}
     terms = [t for t in re.findall(r"[\w'-]{2,}", payload.question.lower()) if t not in stop_words]
     if not terms:
@@ -238,7 +371,8 @@ def ask(payload: AskRequest, x_user_id: Annotated[str, Header()] = "demo-user",
     match = " OR ".join('"' + t.replace('"', '') + '"' for t in sorted(set(terms))[:20])
     today = date.today().isoformat()
     with connect() as db:
-        rows = db.execute("""
+        group_slots = ",".join("?" for _ in groups)
+        rows = db.execute(f"""
           SELECT c.id,c.document_id,c.page,c.heading,c.body,d.title,d.filename,d.version,d.groups_json,
                  d.effective_from,d.effective_to,d.ingested_at,bm25(chunks_fts) AS rank
           FROM chunks_fts JOIN chunks c ON c.id=chunks_fts.chunk_id
@@ -246,16 +380,12 @@ def ask(payload: AskRequest, x_user_id: Annotated[str, Header()] = "demo-user",
           WHERE chunks_fts MATCH ? AND d.active=1
             AND (d.effective_from IS NULL OR d.effective_from<=?)
             AND (d.effective_to IS NULL OR d.effective_to>=?)
+            AND EXISTS (SELECT 1 FROM json_each(d.groups_json) AS acl WHERE acl.value IN ({group_slots}))
           ORDER BY rank LIMIT 100
-        """, (match, today, today)).fetchall()
-    visible = []
-    for row in rows:
-        allowed = set(json.loads(row["groups_json"]))
-        if groups & allowed:
-            visible.append(row)
+        """, (match, today, today, *groups)).fetchall()
     # FTS5 BM25 is negative: lower values are better. Score is normalized for a simple abstention gate.
     citations = []
-    for row in visible[:payload.limit]:
+    for row in rows[:payload.limit]:
         score = max(0.0, 1.0 / (1.0 + abs(float(row["rank"]))))
         haystack = " ".join((row["title"], row["heading"] or "", row["body"])).lower()
         coverage = sum(1 for term in set(terms) if term in haystack) / max(1, len(set(terms)))
@@ -272,22 +402,22 @@ def ask(payload: AskRequest, x_user_id: Annotated[str, Header()] = "demo-user",
 
 
 @app.post("/api/feedback", status_code=201)
-def feedback(payload: FeedbackRequest, x_user_id: Annotated[str, Header()] = "demo-user") -> dict:
-    user_id, groups = user_context(x_user_id)
+def feedback(payload: FeedbackRequest, user: dict = Depends(current_user)) -> dict:
     with connect() as db:
         for chunk_id in payload.chunk_ids:
             row = db.execute("""SELECT d.groups_json FROM chunks c JOIN documents d ON d.id=c.document_id
                                WHERE c.id=? AND d.active=1""", (chunk_id,)).fetchone()
-            if not row or not groups.intersection(json.loads(row[0])):
+            if not row or not set(user["groups"]).intersection(json.loads(row[0])):
                 raise HTTPException(404, "One or more cited sources are unavailable.")
-        db.execute("INSERT INTO feedback VALUES(?,?,?,?,?,?,?)", (str(uuid.uuid4()), user_id,
+        db.execute("INSERT INTO feedback VALUES(?,?,?,?,?,?,?)", (str(uuid.uuid4()), user["id"],
                    hashlib.sha256(payload.question.encode()).hexdigest(), json.dumps(payload.chunk_ids),
                    payload.rating, payload.reason, now()))
+        record_event(db, user, "feedback.submit", details={"rating": payload.rating})
     return {"status": "recorded"}
 
 
 @app.get("/api/admin/status")
-def admin_status() -> dict:
+def admin_status(user: dict = Depends(require_admin)) -> dict:
     with connect() as db:
         docs = db.execute("SELECT id,title,filename,version,owner,groups_json,effective_from,effective_to,ingested_at,active FROM documents ORDER BY ingested_at DESC").fetchall()
         jobs = db.execute("SELECT id,filename,status,reason,created_at,completed_at FROM jobs ORDER BY created_at DESC LIMIT 100").fetchall()
@@ -295,7 +425,7 @@ def admin_status() -> dict:
 
 
 @app.post("/api/documents/{document_id}/retire")
-def retire(document_id: str) -> dict:
+def retire(document_id: str, user: dict = Depends(require_admin)) -> dict:
     with connect() as db:
         cur = db.execute("UPDATE documents SET active=0 WHERE id=? AND active=1", (document_id,))
         if not cur.rowcount:
@@ -303,20 +433,24 @@ def retire(document_id: str) -> dict:
         # Remove from search index immediately; chunks remain for audit.
         ids = [r[0] for r in db.execute("SELECT id FROM chunks WHERE document_id=?", (document_id,))]
         db.executemany("DELETE FROM chunks_fts WHERE chunk_id=?", [(i,) for i in ids])
+        record_event(db, user, "document.retire", document_id)
     return {"status": "retired", "document_id": document_id}
 
 
 @app.get("/", response_class=HTMLResponse)
 def home() -> str:
-    return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Knowledge Assistant</title>
-    <style>body{font:16px system-ui;max-width:850px;margin:3rem auto;padding:0 1rem;color:#20252b}textarea,input{width:100%;padding:.7rem;margin:.35rem 0 1rem;box-sizing:border-box}button{padding:.7rem 1rem;background:#164e63;color:white;border:0;border-radius:5px;cursor:pointer}article{border:1px solid #ccd5dc;padding:1rem;margin:.7rem 0;border-radius:6px}.muted{color:#566}small{display:block}</style></head><body>
-    <h1>Enterprise Knowledge Assistant</h1><p class=muted>Demo corpus only. Answers show approved source excerpts; the assistant abstains when it cannot find evidence.</p>
-    <label>Demo identity <select id=user><option value='alice|general,finance'>Alice (general + finance)</option><option value='bob|general'>Bob (general)</option></select></label>
-    <form id=ask><label for=q>Ask a question</label><textarea id=q minlength=3 required placeholder='What is the travel claim limit?'></textarea><button>Search approved knowledge</button></form>
-    <section id=result aria-live=polite></section><h2>Ingestion status</h2><button id=refresh>Refresh status</button><section id=status></section>
+    return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Knowledge Assistant</title>
+    <style>body{font:15px system-ui;max-width:900px;margin:3rem auto;padding:0 1rem;color:#17252a;background:#f7faf8}input,textarea{font:inherit;padding:.65rem;border:1px solid #c7d3cf;border-radius:6px}button{font:inherit;padding:.65rem 1rem;border:0;border-radius:6px;background:#17604c;color:white;cursor:pointer}form{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}textarea{width:100%;min-height:90px}section{background:white;border:1px solid #dce5e1;border-radius:10px;padding:1rem;margin:1rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}.muted{color:#586a64;font-size:.9rem}</style></head><body>
+    <h1>Enterprise Knowledge Assistant</h1><p class="muted">Fictional demo documents. Access groups are resolved from your signed-in account.</p>
+    <section><h2 id="identity">Sign in</h2><p id="groups" class="muted">Demo credentials are printed once in the server terminal on first start.</p><form id="login"><input name="username" autocomplete="username" aria-label="Username" placeholder="Username" required><input name="password" type="password" autocomplete="current-password" aria-label="Password" placeholder="Password" required><button>Sign in</button></form><button id="logout" hidden>Sign out</button></section>
+    <section><h2>Search approved documents</h2><form id="ask"><textarea name="question" minlength="3" placeholder="What is the travel claim limit?" required></textarea><button>Search sources</button></form><pre id="result" aria-live="polite"></pre></section>
+    <section id="admin" hidden><h2>Administrator tools</h2><form id="upload"><input name="file" type="file" accept=".md,.txt,.html,.pdf" required><input name="title" placeholder="Document title" required><input name="access_groups" value="general" aria-label="Access groups"><button>Index document</button></form><button id="status">Refresh ingestion status</button><pre id="statusResult"></pre></section>
     <script>
-    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    document.querySelector('#ask').onsubmit=async e=>{e.preventDefault();let [id,groups]=document.querySelector('#user').value.split('|');let r=await fetch('/api/ask',{method:'POST',headers:{'content-type':'application/json','x-user-id':id,'x-user-groups':groups},body:JSON.stringify({question:document.querySelector('#q').value})});let d=await r.json();document.querySelector('#result').innerHTML=`<p><b>${esc(d.answer)}</b></p>`+d.citations.map(c=>`<article><b>${esc(c.title)}</b> · v${esc(c.version)}<small>${esc(c.filename)}${c.page?' · page '+c.page:''}${c.heading?' · '+esc(c.heading):''}</small><p>${esc(c.excerpt)}</p><small>Last indexed: ${esc(c.last_indexed)}</small></article>`).join('')};
-    async function status(){let d=await(await fetch('/api/admin/status')).json();document.querySelector('#status').innerHTML=d.documents.map(x=>`<article>${esc(x.title)} · v${esc(x.version)} · ${x.active?'active':'retired'} · groups: ${esc(x.access_groups.join(', '))}</article>`).join('')||'<p>No documents indexed yet.</p>'};document.querySelector('#refresh').onclick=status;status();
+    const $=s=>document.querySelector(s), api=(path,opts={})=>fetch(path,{credentials:'same-origin',...opts});
+    async function refresh(){try{let r=await api('/api/me'),d=await r.json();if(!r.ok)throw Error();$('#identity').textContent='Signed in as '+d.user.username+' ('+d.user.role+')';$('#groups').textContent='Authorized groups: '+d.user.groups.join(', ');$('#login').hidden=true;$('#logout').hidden=false;$('#admin').hidden=d.user.role!=='admin'}catch{$('#identity').textContent='Sign in';$('#groups').textContent='Use the demo credentials printed once in the server terminal on first start.';$('#login').hidden=false;$('#logout').hidden=true;$('#admin').hidden=true}}
+    $('#login').onsubmit=async e=>{e.preventDefault();let d=Object.fromEntries(new FormData(e.currentTarget));let r=await api('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(d)});if(!r.ok){$('#result').textContent=(await r.json()).detail;return}e.currentTarget.reset();await refresh()};
+    $('#logout').onclick=async()=>{await api('/api/logout',{method:'POST'});await refresh()};
+    $('#ask').onsubmit=async e=>{e.preventDefault();let r=await api('/api/ask',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:new FormData(e.currentTarget).get('question')})});$('#result').textContent=JSON.stringify(await r.json(),null,2)};
+    $('#upload').onsubmit=async e=>{e.preventDefault();let r=await api('/api/documents',{method:'POST',body:new FormData(e.currentTarget)});$('#statusResult').textContent=JSON.stringify(await r.json(),null,2)};
+    $('#status').onclick=async()=>{$('#statusResult').textContent=JSON.stringify(await(await api('/api/admin/status')).json(),null,2)};refresh();
     </script></body></html>"""
-

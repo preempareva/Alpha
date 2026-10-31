@@ -16,12 +16,14 @@ from urllib.request import Request, urlopen
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from alpha_core.observability import RequestContextMiddleware
 from alpha_core.settings import Settings
 
 ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT / ".env", override=False)
 WORKSPACE = ROOT / "tools"
 PROJECTS = [
     ("knowledge", "enterprise-knowledge-assistant", "Knowledge assistant", "Search approved docs and get answers with source citations.", "⌕", "Work"),

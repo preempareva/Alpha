@@ -37,6 +37,15 @@ This is a code inspection and test run of the already extracted project. The sup
 
 Latest validation: `python -m pytest -q` from the Alpha root — **41 passed** on Python 3.14.0. The project targets Python 3.12+; a Python 3.12 CI run remains pending.
 
+## Knowledge Assistant security progress
+
+- Removed all trust in `X-User-Id` and `X-User-Groups`. A signed, HttpOnly, eight-hour cookie identifies a database user; role and groups are read from the server-side users table on every request.
+- Added bcrypt password hashes, configurable demo credentials, and random one-time credentials printed only when the demo accounts are first created. Admin-only access covers upload, retirement, and ingestion status.
+- Moved the access-group predicate into the SQLite retrieval query before candidate text is returned; expired and retired documents remain excluded.
+- Added `audit_events` for successful login/logout, document upload/retirement, and feedback. Updated both the Alpha panel and standalone Knowledge page to sign in without identity headers.
+- Added adversarial tests for unauthenticated requests, header spoofing, cross-group access, admin authorization, expiry, retirement, and audit logging.
+- Validation on the Alpha-local Python 3.14 environment: **45 tests passed**; `ruff check alpha_core`, `mypy`, and `node --check static/app.js` passed. Full pytest still emits dependency deprecation warnings from Starlette/httpx and PyMuPDF; no failures.
+
 ## Baseline test result
 
 Command: `python -m pytest "ai projects\\project-alpha\\tools" -q`

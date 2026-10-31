@@ -3,9 +3,8 @@ $python = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) {
   $systemPython = Get-Command python -ErrorAction SilentlyContinue
   if (-not $systemPython) { throw 'Install Python 3.12 or newer, then run Alpha again.' }
-  $version = & $systemPython.Source -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
-  $parts = $version.Split('.') | ForEach-Object { [int]$_ }
-  if ($parts[0] -lt 3 -or ($parts[0] -eq 3 -and $parts[1] -lt 12)) {
+  $version = [int](& $systemPython.Source -c 'import sys; print(sys.version_info.major * 100 + sys.version_info.minor)')
+  if ($version -lt 312) {
     throw 'Project Alpha requires Python 3.12 or newer.'
   }
   Write-Host 'Preparing Alpha once: creating a local environment and installing pinned requirements...' -ForegroundColor Yellow

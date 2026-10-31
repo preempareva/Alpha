@@ -10,5 +10,6 @@ __pycache__/
 **/data/runtime/*
 **/artifacts/*
 **/instance/*.db
+**/instance/session.secret
 **/test.db
 **/test_*.db
