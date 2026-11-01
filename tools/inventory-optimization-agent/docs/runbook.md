@@ -2,7 +2,7 @@
 
 ## Start
 
-From `ai projects/project-alpha`, start the combined Alpha workspace with:
+From the Project Alpha root, start the combined Alpha workspace with:
 
 ```powershell
 ./run.ps1

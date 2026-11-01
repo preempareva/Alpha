@@ -1,5 +1,7 @@
 $ErrorActionPreference = 'Stop'
-$venv = Join-Path (Split-Path -Parent $PSScriptRoot) '.venv'
+$workspaceRoot = Split-Path -Parent $PSScriptRoot
+$supportRoot = Join-Path $workspaceRoot 'EXtra\project-alpha-support'
+$venv = Join-Path $supportRoot '.venv'
 $python = Join-Path $venv 'Scripts/python.exe'
 if (-not (Test-Path -LiteralPath $python)) {
   $systemPython = Get-Command python -ErrorAction SilentlyContinue
@@ -15,6 +17,8 @@ if (-not (Test-Path -LiteralPath $python)) {
   if ($LASTEXITCODE -ne 0) { throw 'Could not install Alpha requirements.' }
 }
 
+$previousBytecodeFlag = $env:PYTHONDONTWRITEBYTECODE
+$env:PYTHONDONTWRITEBYTECODE = '1'
 Push-Location $PSScriptRoot
 try {
   & $python -m alpha_app.bootstrap
@@ -27,5 +31,7 @@ try {
 finally {
   if ($null -eq $previousBrowserFlag) { Remove-Item Env:ALPHA_OPEN_BROWSER -ErrorAction SilentlyContinue }
   else { $env:ALPHA_OPEN_BROWSER = $previousBrowserFlag }
+  if ($null -eq $previousBytecodeFlag) { Remove-Item Env:PYTHONDONTWRITEBYTECODE -ErrorAction SilentlyContinue }
+  else { $env:PYTHONDONTWRITEBYTECODE = $previousBytecodeFlag }
   Pop-Location
 }

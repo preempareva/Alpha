@@ -30,7 +30,7 @@ This is a hand-authored, synthetic-data benchmark. The 20 cross-project cases ea
 
 ```powershell
 $env:LLM_PROVIDER = 'none'
-..\.venv\Scripts\python.exe -m scripts.evaluate_agent_hub
+..\EXtra\project-alpha-support\.venv\Scripts\python.exe -m scripts.evaluate_agent_hub
 ```
 
 Per-task metadata and failure classifications are in `agent_hub.json`; no generated data values are included.

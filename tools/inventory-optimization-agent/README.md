@@ -8,7 +8,7 @@ Replenishment calculation uses Decimal quantities/costs, explicit supplier MOQ a
 
 ## Run in Alpha
 
-From `ai projects/project-alpha`, run `./run.ps1`. Alpha bootstrap creates the ignored fixed-seed demo tables as needed. This tool opens inside the Alpha site at http://127.0.0.1:8000.
+From the Project Alpha root, run `./run.ps1`. Alpha bootstrap creates the ignored fixed-seed demo tables as needed. This tool opens inside the Alpha site at http://127.0.0.1:8000.
 
 ## Limits
 

@@ -551,7 +551,7 @@ def render_markdown(output: dict[str, Any]) -> str:
         "",
         "```powershell",
         "$env:LLM_PROVIDER = 'none'",
-        "..\\.venv\\Scripts\\python.exe -m scripts.evaluate_agent_hub",
+        "..\\EXtra\\project-alpha-support\\.venv\\Scripts\\python.exe -m scripts.evaluate_agent_hub",
         "```",
         "",
         "Per-task metadata and failure classifications are in `agent_hub.json`; no generated data values are included.",

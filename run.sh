@@ -1,8 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-VENV_DIR="$(dirname "$PROJECT_DIR")/.venv"
+WORKSPACE_DIR="$(dirname "$PROJECT_DIR")"
+SUPPORT_DIR="$WORKSPACE_DIR/EXtra/project-alpha-support"
+VENV_DIR="$SUPPORT_DIR/.venv"
 PYTHON="$VENV_DIR/bin/python"
+export PYTHONDONTWRITEBYTECODE=1
 cd "$PROJECT_DIR"
 if [ ! -x "$PYTHON" ]; then
   command -v python3 >/dev/null 2>&1 || { echo "Install Python 3.12 or newer." >&2; exit 1; }

@@ -19,7 +19,7 @@ chmod +x ./run.sh   # first run only
 ./run.sh
 ```
 
-Then open <http://127.0.0.1:8000>. The launch script uses a shared `.venv` in the parent `ai projects` folder and installs pinned dependencies on first run. It builds missing fictional demo data and model files. Press Ctrl+C in the terminal to stop the server.
+Then open <http://127.0.0.1:8000>. The launch script uses `../EXtra/project-alpha-support/.venv` and installs pinned dependencies on first run. In this Projects workspace, ignored runtime tables, model artifacts, and caches are kept under that support folder and exposed at their expected paths; a clean clone regenerates its own ignored demo assets. Press Ctrl+C in the terminal to stop the server.
 
 ## What each tool actually does
 
