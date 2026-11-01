@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 from importlib import import_module
 
 import pytest
+from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.testclient import TestClient
 
@@ -51,11 +53,57 @@ def test_shell_uses_the_reviewed_product_labels_without_changing_slugs():
     app_module = import_module("alpha_app.main")
     projects = {item[0]: item[2] for item in app_module.PROJECTS}
     assert projects["helpdesk"] == "Helpdesk Triage"
+    assert projects["knowledge"] == "Knowledge Assistant"
+    assert projects["travel"] == "Travel Itinerary Planner"
+    assert projects["demand"] == "Demand Forecasting"
+    assert projects["churn"] == "Customer Churn Prediction"
+    assert projects["sales-forecast"] == "Sales Pipeline Forecast"
+    assert projects["sentiment"] == "Customer Sentiment Insights"
     assert projects["bi"] == "BI Analyst Workflow"
     assert projects["replenishment"] == "Inventory Control Tower"
     assert projects["sales-nudge"] == "Sales Follow-up Prioritizer"
     assert projects["incidents"] == "Incident Evidence Correlator (synthetic)"
+    assert projects["quotes"] == "Supplier Quote Comparison"
     assert projects["segments"] == "Customer Segmentation"
+    mounted_titles = {
+        project[0]: subapp.title
+        for project, subapp in zip(app_module.PROJECTS, app_module._loaded_apps)
+    }
+    assert mounted_titles == {project[0]: project[2] for project in app_module.PROJECTS}
+
+
+def test_shell_security_headers_and_same_origin_cors_policy():
+    app_module = import_module("alpha_app.main")
+    response = TestClient(app_module.app).get(
+        "/health", headers={"Origin": "https://cross-origin.example"},
+    )
+    assert response.status_code == 200
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["referrer-policy"] == "same-origin"
+    assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+    assert "access-control-allow-origin" not in response.headers
+    assert all(
+        subapp.exception_handlers[Exception] is app_module.internal_error
+        for subapp in app_module._loaded_apps
+    )
+
+
+def test_unhandled_error_response_omits_exception_details_and_logs(caplog):
+    app_module = import_module("alpha_app.main")
+    app = FastAPI()
+    app.add_exception_handler(Exception, app_module.internal_error)
+
+    @app.get("/failure")
+    def failure():
+        raise RuntimeError("synthetic-secret-sentinel")
+
+    with caplog.at_level(logging.ERROR, logger="alpha_app"):
+        response = TestClient(app, raise_server_exceptions=False).get("/failure")
+    assert response.status_code == 500
+    assert response.json()["code"] == "internal_error"
+    assert "synthetic-secret-sentinel" not in response.text
+    assert "synthetic-secret-sentinel" not in caplog.text
 
 
 def test_validation_errors_include_request_id():

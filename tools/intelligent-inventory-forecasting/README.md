@@ -1,4 +1,4 @@
-﻿# Intelligent Inventory Forecasting
+# Demand Forecasting
 
 Synthetic weekly demand forecast prototype with a last-eight-week mean baseline, 10th/50th/90th percentile-style ranges, and an eight-week temporal holdout compared with a last-value baseline.
 

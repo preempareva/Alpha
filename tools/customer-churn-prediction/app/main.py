@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from .model import FEATURES, METRICS_PATH, load_bundle, score_rows
 
-app = FastAPI(title="Customer Churn Risk Prototype", version="0.1.0")
+app = FastAPI(title="Customer Churn Prediction", version="0.1.0")
 
 
 class CustomerFeatures(BaseModel):
@@ -28,9 +28,9 @@ class CustomerFeatures(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 def home() -> str:
-    return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Churn Risk Review</title>
+    return """<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Customer Churn Prediction</title>
     <style>body{font:16px system-ui;max-width:780px;margin:3rem auto;padding:0 1rem;color:#20252b}label{display:block;margin:.65rem 0}input,select{padding:.5rem;margin-left:.5rem}button{padding:.7rem 1rem;background:#164e63;color:white;border:0;border-radius:5px;cursor:pointer}article{border:1px solid #ccd5dc;padding:1rem;margin:.7rem 0;border-radius:6px}.notice{color:#566}</style></head><body>
-    <h1>Customer churn risk review</h1><p class=notice>Synthetic demonstration only. Scores are uncertain prioritization signals, not reasons to deny service or automatic outreach.</p>
+    <h1>Customer Churn Prediction</h1><p class=notice>Synthetic demonstration only. Scores are uncertain prioritization signals, not reasons to deny service or automatic outreach.</p>
     <form id=form><label>Demo customer ID <input name=customer_id value='SYN-demo' required></label>
     <label>Tenure (months) <input name=tenure_months type=number min=0 value=8 required></label>
     <label>Active days (last 30) <input name=active_days_30d type=number min=0 max=31 value=8 required></label>

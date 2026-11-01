@@ -1,4 +1,4 @@
-﻿# Customer Sentiment Intelligence
+# Customer Sentiment Insights
 
 Synthetic review analytics prototype with a temporal TF-IDF + logistic regression sentiment baseline, majority-class comparison, per-class metrics, and lightweight keyword themes. It is intended to show an evaluation workflow, not to represent actual customer feedback.
 

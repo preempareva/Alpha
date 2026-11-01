@@ -1,4 +1,4 @@
-﻿# Sales Pipeline Forecasting
+# Sales Pipeline Forecast
 
 Point-in-time synthetic opportunity scoring with a calibrated logistic-regression baseline and prevalence-only dummy comparison. Each opportunity receives a 90-day win probability and a probability-weighted pipeline value. This is a planning signal, not a revenue commitment.
 

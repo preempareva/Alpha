@@ -1,24 +1,16 @@
-import os
-from pathlib import Path
 from importlib import import_module
 import pytest
 from fastapi.testclient import TestClient
 
-ROOT = Path(__file__).resolve().parents[1]
-os.environ["HELPDESK_DB"] = str(ROOT / "instance/test.db")
 module = import_module("tools.ai-it-helpdesk-assistant.app.main")
 app, init = module.app, module.init
 
 
 @pytest.fixture(autouse=True)
-def reset():
-    p = ROOT / "instance/test.db"
-    if p.exists():
-        p.unlink()
+def reset(tmp_path, monkeypatch):
+    monkeypatch.setattr(module, "DB", tmp_path / "helpdesk.db")
     init()
     yield
-    if p.exists():
-        p.unlink()
 
 
 @pytest.fixture

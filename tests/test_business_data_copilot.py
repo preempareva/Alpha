@@ -11,7 +11,9 @@ import openpyxl
 import pandas as pd
 import pytest
 from alpha_core.agent import AgentIdentity
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 models = importlib.import_module("tools.business-data-copilot.app.models")
 ingest = importlib.import_module("tools.business-data-copilot.app.ingest")
@@ -333,6 +335,33 @@ def test_authenticated_api_requires_csrf_and_runs_synthetic_flow(tmp_path: Path,
             assert uploaded.json()["filename_label"] == "small.csv"
     finally:
         main.app.dependency_overrides.clear()
+
+
+def test_copilot_state_changes_share_the_hub_user_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    main = importlib.import_module("tools.business-data-copilot.app.main")
+    hub = importlib.import_module("alpha_app.agent_hub")
+    user = {"id": "rate-limited-user", "username": "analyst", "role": "employee", "groups": []}
+
+    class Codec:
+        @staticmethod
+        def verify_csrf(token: str, subject: str) -> None:
+            assert token == "csrf-ok" and subject == user["id"]
+
+    class KnowledgeModule:
+        @staticmethod
+        def _session_codec() -> Codec:
+            return Codec()
+
+    request = Request({
+        "type": "http", "method": "POST", "path": "/api/query",
+        "headers": [(b"x-csrf-token", b"csrf-ok")],
+    })
+    monkeypatch.setattr(main, "_knowledge_module", lambda: KnowledgeModule())
+    monkeypatch.setattr(main, "RATE_LIMITER", hub.UserRateLimiter(limit=1, window_seconds=60))
+    assert main.csrf_user(request, user) == user
+    with pytest.raises(HTTPException) as error:
+        main.csrf_user(request, user)
+    assert error.value.status_code == 429
 
 
 def test_upload_body_middleware_stops_large_stream_before_form_parsing() -> None:

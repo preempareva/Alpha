@@ -28,18 +28,18 @@ load_dotenv(ROOT / ".env", override=False)
 WORKSPACE = ROOT / "tools"
 PROJECTS = [
     ("copilot", "business-data-copilot", "Business Data Copilot", "Upload a CSV or workbook, confirm its schema, and ask for verified, read-only analysis.", "▤", "Insights"),
-    ("knowledge", "enterprise-knowledge-assistant", "Knowledge assistant", "Search approved docs and get answers with source citations.", "⌕", "Work"),
+    ("knowledge", "enterprise-knowledge-assistant", "Knowledge Assistant", "Search approved docs and get answers with source citations.", "⌕", "Work"),
     ("helpdesk", "ai-it-helpdesk-assistant", "Helpdesk Triage", "Classify a support request and prepare a reviewable ticket.", "◈", "Work"),
-    ("travel", "travel-itinerary-planner", "Trip planner", "Build an itinerary from a fictional activity catalog.", "✳", "Plan"),
-    ("demand", "intelligent-inventory-forecasting", "Demand forecast", "Explore demand forecasts and a temporal backtest.", "⌁", "Plan"),
-    ("churn", "customer-churn-prediction", "Churn signals", "Score synthetic accounts and inspect evaluation metrics.", "↘", "Insights"),
-    ("sales-forecast", "sales-pipeline-forecasting", "Sales forecast", "Estimate opportunity win probabilities for review.", "↗", "Insights"),
-    ("sentiment", "customer-sentiment-intelligence", "Voice of customer", "Analyze a review and explore sentiment themes.", "◉", "Insights"),
+    ("travel", "travel-itinerary-planner", "Travel Itinerary Planner", "Build an itinerary from a fictional activity catalog.", "✳", "Plan"),
+    ("demand", "intelligent-inventory-forecasting", "Demand Forecasting", "Explore synthetic demand forecasts and a temporal backtest.", "⌁", "Plan"),
+    ("churn", "customer-churn-prediction", "Customer Churn Prediction", "Score synthetic accounts and inspect evaluation metrics.", "↘", "Insights"),
+    ("sales-forecast", "sales-pipeline-forecasting", "Sales Pipeline Forecast", "Estimate synthetic opportunity win probabilities for review.", "↗", "Insights"),
+    ("sentiment", "customer-sentiment-intelligence", "Customer Sentiment Insights", "Analyze a synthetic review and explore sentiment themes.", "◉", "Insights"),
     ("bi", "multi-agent-business-intelligence", "BI Analyst Workflow", "Ask questions against a controlled synthetic retail dataset.", "⌗", "Insights"),
     ("replenishment", "inventory-optimization-agent", "Inventory Control Tower", "Review synthetic demand, stock risk, transfer options, and approval-gated replenishment simulations.", "▦", "Plan"),
     ("sales-nudge", "ai-sales-nudge-agent", "Sales Follow-up Prioritizer", "Prioritize fictional leads and draft a follow-up for review.", "✉", "Work"),
     ("incidents", "ai-observability-investigator", "Incident Evidence Correlator (synthetic)", "Correlate synthetic logs, metrics, and traces.", "⌬", "Work"),
-    ("quotes", "ai-supplier-quote-comparison", "Quote comparison", "Compare supplier offers with explicit cost and quality terms.", "⇄", "Plan"),
+    ("quotes", "ai-supplier-quote-comparison", "Supplier Quote Comparison", "Compare supplier offers with explicit cost and quality terms.", "⇄", "Plan"),
     ("segments", "customer-segmentation-agent", "Customer Segmentation", "Inspect aggregate RFM clusters from synthetic transactions.", "◌", "Insights"),
 ]
 _weather_cache: dict[str, tuple[float, dict]] = {}
@@ -93,6 +93,23 @@ app.add_middleware(RequestContextMiddleware)
 app.include_router(agent_hub_router)
 _loaded_apps = []
 
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; base-uri 'self'; connect-src 'self'; frame-ancestors 'none'; "
+        "form-action 'self'; img-src 'self' data:; object-src 'none'; "
+        "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'",
+    )
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+    return response
+
 for slug, folder, _title, _description, _icon, _group in PROJECTS:
     project_path = WORKSPACE / folder
     if not project_path.is_dir():
@@ -111,6 +128,23 @@ async def http_error(request: Request, exc: HTTPException):
         "code": "http_error",
         "request_id": getattr(request.state, "request_id", None),
     })
+
+
+@app.exception_handler(Exception)
+async def internal_error(request: Request, exc: Exception):
+    logging.getLogger("alpha_app").error(
+        "Unhandled request failure type=%s request_id=%s",
+        type(exc).__name__, getattr(request.state, "request_id", None),
+    )
+    return JSONResponse(status_code=500, content={
+        "detail": "The request could not be completed safely.",
+        "code": "internal_error",
+        "request_id": getattr(request.state, "request_id", None),
+    })
+
+
+for _subapp in _loaded_apps:
+    _subapp.add_exception_handler(Exception, internal_error)
 
 
 @app.exception_handler(RequestValidationError)

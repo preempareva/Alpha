@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from .agent import AmbiguousQuestion, UnsupportedQuestion, run_bi_agent
 from .workflow import run_workflow
 
-app = FastAPI(title="BI Analyst Workflow (Synthetic)", version="0.1.0")
+app = FastAPI(title="BI Analyst Workflow", version="0.1.0")
 ROOT = Path(__file__).resolve().parents[1]
 TRACE_PATH = Path(os.getenv("ALPHA_BI_TRACE_PATH", str(ROOT / "data/runtime/bi-agent-traces.db")))
 TRACE_STORE = TraceStore(TRACE_PATH)

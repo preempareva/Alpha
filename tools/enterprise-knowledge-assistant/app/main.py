@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Enterprise Knowledge Assistant", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Knowledge Assistant", version="0.1.0", lifespan=lifespan)
 
 
 @contextmanager
@@ -585,7 +585,7 @@ def retire(document_id: str, user: dict = Depends(require_admin)) -> dict:
 def home() -> str:
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Knowledge Assistant</title>
     <style>body{font:15px system-ui;max-width:900px;margin:3rem auto;padding:0 1rem;color:#17252a;background:#f7faf8}input,textarea{font:inherit;padding:.65rem;border:1px solid #c7d3cf;border-radius:6px}button{font:inherit;padding:.65rem 1rem;border:0;border-radius:6px;background:#17604c;color:white;cursor:pointer}form{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}textarea{width:100%;min-height:90px}section{background:white;border:1px solid #dce5e1;border-radius:10px;padding:1rem;margin:1rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}.muted{color:#586a64;font-size:.9rem}</style></head><body>
-    <h1>Enterprise Knowledge Assistant</h1><p class="muted">Fictional demo documents. Access groups are resolved from your signed-in account.</p>
+    <h1>Knowledge Assistant</h1><p class="muted">Fictional demo documents. Access groups are resolved from your signed-in account.</p>
     <section><h2 id="identity">Sign in</h2><p id="groups" class="muted">Demo credentials are printed once in the server terminal on first start.</p><form id="login"><input name="username" autocomplete="username" aria-label="Username" placeholder="Username" required><input name="password" type="password" autocomplete="current-password" aria-label="Password" placeholder="Password" required><button>Sign in</button></form><button id="logout" hidden>Sign out</button></section>
     <section><h2>Search approved documents</h2><form id="ask"><textarea name="question" minlength="3" placeholder="What is the travel claim limit?" required></textarea><button>Search sources</button></form><pre id="result" aria-live="polite"></pre></section>
     <section id="admin" hidden><h2>Administrator tools</h2><form id="upload"><input name="file" type="file" accept=".md,.txt,.html,.pdf" required><input name="title" placeholder="Document title" required><input name="access_groups" value="general" aria-label="Access groups"><button>Index document</button></form><button id="status">Refresh ingestion status</button><pre id="statusResult"></pre></section>

@@ -20,7 +20,7 @@ Baseline was run on branch alpha-v2-build before changes for this master plan. T
 - [x] Phase D — Business Data Copilot. Gate passed: 135 full-suite tests; 16 Copilot-focused tests; scoped Ruff, core/BI/Copilot mypy, JS syntax, and the saved synthetic Copilot evaluation passed.
 - [x] Phase E — Inventory Control Tower. Gate passed: 154 full-suite tests; 19 inventory tests covered by the full run; scoped Ruff, core and inventory mypy, JS syntax, dependency consistency, and saved forecast/scenario evaluation passed.
 - [x] Phase F — Hub wiring and expanded evaluation. Gate passed: 156 full-suite tests; expanded 80-task Hub evaluation with 20/20 cross-project tasks successful; scoped Ruff, core/inventory mypy, JS syntax, dependency checks, and screenshot TODO documentation passed.
-- [ ] Phase G — Housekeeping, CI, docs consistency.
+- [x] Phase G — Housekeeping, CI, docs consistency. Local gate passed: 160 tests; scoped Ruff; root, BI, Copilot, and Inventory mypy; JavaScript syntax, workflow YAML, package consistency, threshold checker, docs links, and tracked-generated-data audit passed.
 - [ ] Phase H — Final self-audit and fresh-clone verification.
 
 ## Phase A notes
@@ -90,6 +90,17 @@ Verified that Copilot and Inventory read tools appear in the Hub registry with t
 - Changed-code Ruff passed; mypy passed for **14 Alpha core/Hub files** and **6 inventory source/script files**. All tracked static JavaScript passed `node --check`; `git diff --check` and `pip check` passed.
 - LLM_PROVIDER remained `none`; Ollama was not run. Browser-driven screenshots and Playwright flows remain unverified.
 
+## Phase G notes
+
+Reconciled the root project table, stable route map, product labels, tool documents, and architecture notes. Added the Knowledge Assistant data and retrieval model cards, BI demo script, and five evidence-bounded flagship case studies. `scripts/seed_all.py` now rebuilds ignored synthetic assets only when expected outputs are absent; it refuses to overwrite existing local outputs and supplies ephemeral demo credentials without printing them. CI targets Ubuntu Python 3.12 and 3.13 plus a Windows fast subset, uses the pinned lock file, runs maintained Ruff/mypy scopes, all five flagship evaluations and central tolerance checks, the full test suite, and tracked JavaScript syntax checks. Python 3.12/3.13 and Windows hosted runners are configured but have not run in this local environment.
+
+- Full suite: **160 passed**, 7 dependency deprecation warnings, with `PYTHON_DOTENV_DISABLED=1`, `LLM_PROVIDER=none`, and database-backed test fixtures isolated to pytest temporary directories.
+- Security coverage: shell security headers and no cross-origin allow header; generic exception responses/logging; mounted-app generic handlers; configurable HttpOnly/SameSite/Secure session cookie; Copilot CSRF and shared rate-limit behavior. Existing Hub rate-limit and CSRF tests remain in the suite.
+- Scoped Ruff passed for the shared runtime, new scripts, flagship packages, and changed tests. Mypy passed for **14 shared files**, **6 BI files**, **11 Copilot files**, and **6 Inventory files**. All **4 tracked JavaScript files** passed `node --check`; pinned dependency consistency passed.
+- Existing aggregate evaluation reports met the new `docs/eval/thresholds.json` tolerances. Phase H will regenerate all assets and reports in an isolated clean checkout and rerun every evaluation against those fresh outputs.
+- CI workflow YAML parsed, updated Markdown links resolved, and a Git-index path audit found **0** tracked database, generated-runtime, model-binary, or secret-path files. `.gitignore` now also covers common serialized model formats.
+- Repo-wide Ruff still contains the previously documented legacy findings; CI checks the maintained/changed scopes and does not reformat unrelated apps. Only Python 3.14 is installed locally.
+
 ## Next action
 
-Begin Phase G: reconcile architecture and product docs, labels, CI and thresholds, security coverage, ignored generated assets, seed_all, project documentation, and flagship case studies.
+Begin Phase H in a temporary tracked checkout: regenerate synthetic fixtures, run all five evaluations and thresholds, tests, static/type checks, app health/API smoke checks, and final path/secret/claim audits. Record the exact results and remaining limits in `docs/BUILD_REPORT.md`.

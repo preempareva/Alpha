@@ -1,4 +1,4 @@
-﻿# Enterprise Knowledge Assistant
+# Knowledge Assistant
 
 A permission-aware, local-first knowledge assistant prototype built from the supplied AI Project Blueprint. It indexes approved Markdown, text, HTML, and PDF files, answers with retrieved source excerpts, and abstains when evidence is weak. All starter content is fictional and synthetic.
 

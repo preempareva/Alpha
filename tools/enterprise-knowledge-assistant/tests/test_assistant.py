@@ -1,13 +1,10 @@
 import os
 import json
 from importlib import import_module
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-DB = Path(__file__).parent / "test.db"
-os.environ["DATABASE_PATH"] = str(DB)
 os.environ["ALPHA_DEMO_ALICE_PASSWORD"] = "test-alice-password"
 os.environ["ALPHA_DEMO_BOB_PASSWORD"] = "test-bob-password"
 os.environ["ALPHA_DEMO_ADMIN_PASSWORD"] = "test-admin-password"
@@ -17,13 +14,10 @@ app, init_db = module.app, module.init_db
 
 
 @pytest.fixture(autouse=True)
-def clean_db():
-    if DB.exists():
-        DB.unlink()
+def clean_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(module, "DB_PATH", tmp_path / "knowledge.db")
     init_db()
     yield
-    if DB.exists():
-        DB.unlink()
 
 
 @pytest.fixture
@@ -36,6 +30,16 @@ def client():
 def login(client, username="admin"):
     password = {"admin": "test-admin-password", "alice": "test-alice-password", "bob": "test-bob-password"}[username]
     return client.post("/api/login", json={"username": username, "password": password})
+
+
+def test_session_cookie_secure_flag_is_configurable(client, monkeypatch):
+    monkeypatch.setenv("ALPHA_HTTPS", "1")
+    response = login(client)
+    cookie = response.headers["set-cookie"].lower()
+    assert response.status_code == 200
+    assert "httponly" in cookie
+    assert "secure" in cookie
+    assert "samesite=lax" in cookie
 
 
 def upload(client, filename="travel.md", body=b"# Claims\nEmployees may claim INR 2500 for hotel stays.", groups="finance"):

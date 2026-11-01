@@ -19,3 +19,13 @@ __pycache__/
 **/test.db
 **/test_*.db
 *.zip
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.onnx
+*.model
+*.safetensors
+*.h5
+*.keras

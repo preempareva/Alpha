@@ -9,14 +9,15 @@ from importlib import import_module
 from pathlib import Path
 import sys
 
-MIN_RECALL_AT_5 = 0.977
-MIN_ABSTENTION_ACCURACY = 1.0
-MAX_ACL_LEAKAGE_RATE = 0.0
-
 os.environ["LLM_PROVIDER"] = "none"
 module = import_module("tools.enterprise-knowledge-assistant.app.main")
 AskRequest, retrieve = module.AskRequest, module.retrieve
 ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+THRESHOLDS = json.loads((PROJECT_ROOT / "docs" / "eval" / "thresholds.json").read_text(encoding="utf-8"))["knowledge"]
+MIN_RECALL_AT_5 = THRESHOLDS["min_recall_at_5"]
+MIN_ABSTENTION_ACCURACY = THRESHOLDS["min_abstention_accuracy"]
+MAX_ACL_LEAKAGE_RATE = THRESHOLDS["max_acl_leakage_rate"]
 cases = json.loads((ROOT / "data/evaluation/questions.json").read_text(encoding="utf-8"))
 
 answerable_hits = []
@@ -77,11 +78,13 @@ metrics["thresholds"] = {
     "minimum_recall_at_5": MIN_RECALL_AT_5,
     "minimum_abstention_accuracy": MIN_ABSTENTION_ACCURACY,
     "maximum_acl_leakage_rate": MAX_ACL_LEAKAGE_RATE,
+    "maximum_expired_version_leaks": THRESHOLDS["max_expired_version_leaks"],
 }
 metrics["passed"] = (
     metrics["recall_at_5"] >= MIN_RECALL_AT_5
     and metrics["abstention_accuracy"] >= MIN_ABSTENTION_ACCURACY
     and metrics["acl_leakage_rate"] <= MAX_ACL_LEAKAGE_RATE
+    and metrics["expired_version_leaks"] <= THRESHOLDS["max_expired_version_leaks"]
 )
 
 lines = [

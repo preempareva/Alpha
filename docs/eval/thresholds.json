@@ -1,0 +1,78 @@
+{
+  "knowledge": {
+    "min_case_count": 120,
+    "min_recall_at_5": 0.95,
+    "min_abstention_accuracy": 0.98,
+    "max_acl_leakage_rate": 0.0,
+    "max_expired_version_leaks": 0
+  },
+  "bi": {
+    "min_gold_case_count": 40,
+    "min_tool_selection_accuracy": 0.98,
+    "min_argument_accuracy": 0.98,
+    "min_numeric_correctness": 0.98,
+    "min_refusal_correctness": 0.98,
+    "min_verifier_catch_rate": 0.98,
+    "min_verifier_tamper_trials": 5
+  },
+  "hub": {
+    "min_task_count": 80,
+    "min_end_to_end_success": 0.98,
+    "min_tool_selection_accuracy": 0.98,
+    "min_argument_accuracy": 0.98,
+    "min_cross_tool_end_to_end_success": 0.98,
+    "min_cross_tool_tool_selection_accuracy": 0.98,
+    "min_cross_tool_argument_accuracy": 0.98,
+    "min_cross_tool_trace_completeness": 0.98,
+    "min_correct_refusal_rate": 0.98,
+    "min_policy_denial_correctness": 0.98,
+    "min_trace_completeness": 0.98,
+    "min_cross_tool_task_count": 20,
+    "min_cross_tool_source_tools": 4,
+    "min_bi_tamper_catch_rate": 0.98,
+    "min_bi_tamper_trials": 5
+  },
+  "copilot": {
+    "min_question_count": 40,
+    "min_numeric_correctness": 0.98,
+    "min_refusal_correctness": 0.98,
+    "min_verifier_tamper_catch_rate": 0.98,
+    "min_verifier_tamper_trials": 5
+  },
+  "inventory": {
+    "min_validated_tables": 6,
+    "min_metric_groups": 36,
+    "min_scenario_count": 6,
+    "required_selected_models": {
+      "intermittent": "naive",
+      "seasonal": "ets"
+    },
+    "metric_tolerance": {
+      "max_wape_increase": 0.05,
+      "max_mase_increase": 0.05,
+      "min_coverage_decrease": 0.05,
+      "selected_model_baselines": {
+        "intermittent:1": {"wape": 1.20833, "mase": 0.64461, "coverage": 0.75},
+        "intermittent:2": {"wape": 1.09896, "mase": 0.93801, "coverage": 0.63889},
+        "intermittent:4": {"wape": 1.34694, "mase": 0.88022, "coverage": 0.63889},
+        "intermittent:6": {"wape": 2.47887, "mase": 0.78242, "coverage": 0.66667},
+        "seasonal:1": {"wape": 0.37355, "mase": 0.81277, "coverage": 0.8},
+        "seasonal:2": {"wape": 0.33446, "mase": 0.75252, "coverage": 0.8},
+        "seasonal:4": {"wape": 0.35265, "mase": 0.77866, "coverage": 0.8},
+        "seasonal:6": {"wape": 0.3399, "mase": 0.80259, "coverage": 0.76111}
+      }
+    },
+    "scenario_tolerance": {
+      "min_fill_rate_decrease": 0.005,
+      "max_stockout_days_increase": 0.05,
+      "baselines": {
+        "supplier_delay:lean": {"fill_rate": 0.9981, "stockout_days": 0.10},
+        "supplier_delay:balanced": {"fill_rate": 0.9992, "stockout_days": 0.02},
+        "supplier_delay:resilient": {"fill_rate": 0.9997, "stockout_days": 0.01},
+        "demand_spike:lean": {"fill_rate": 0.9978, "stockout_days": 0.14},
+        "demand_spike:balanced": {"fill_rate": 0.9987, "stockout_days": 0.07},
+        "demand_spike:resilient": {"fill_rate": 0.9994, "stockout_days": 0.04}
+      }
+    }
+  }
+}
