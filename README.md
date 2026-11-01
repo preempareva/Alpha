@@ -65,4 +65,4 @@ Run the full test suite from this folder:
 python -m pytest
 ```
 
-CI also runs the supported Ruff and mypy scopes, JavaScript syntax checks, fixed-seed evaluations, and a Windows fast-test subset. See [docs/architecture.md](docs/architecture.md), [docs/BUILD_STATE.md](docs/BUILD_STATE.md), and [docs/CASE_STUDIES.md](docs/CASE_STUDIES.md).
+CI also runs the supported Ruff and mypy scopes, JavaScript syntax checks, fixed-seed evaluations, and a Windows fast-test subset. See [docs/architecture.md](docs/architecture.md), [docs/BUILD_STATE.md](docs/BUILD_STATE.md), [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md), and [docs/CASE_STUDIES.md](docs/CASE_STUDIES.md).

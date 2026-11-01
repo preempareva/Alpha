@@ -21,7 +21,7 @@ Baseline was run on branch alpha-v2-build before changes for this master plan. T
 - [x] Phase E — Inventory Control Tower. Gate passed: 154 full-suite tests; 19 inventory tests covered by the full run; scoped Ruff, core and inventory mypy, JS syntax, dependency consistency, and saved forecast/scenario evaluation passed.
 - [x] Phase F — Hub wiring and expanded evaluation. Gate passed: 156 full-suite tests; expanded 80-task Hub evaluation with 20/20 cross-project tasks successful; scoped Ruff, core/inventory mypy, JS syntax, dependency checks, and screenshot TODO documentation passed.
 - [x] Phase G — Housekeeping, CI, docs consistency. Local gate passed: 160 tests; scoped Ruff; root, BI, Copilot, and Inventory mypy; JavaScript syntax, workflow YAML, package consistency, threshold checker, docs links, and tracked-generated-data audit passed.
-- [ ] Phase H — Final self-audit and fresh-clone verification.
+- [x] Phase H — Final self-audit and fresh-clone verification. Gate passed in a temporary tracked checkout from `e0472ed`: pinned install, `seed_all`, all five evaluations and thresholds, 160 tests, static/type checks, app/API smoke, and source/path hygiene audits passed.
 
 ## Phase A notes
 
@@ -101,6 +101,14 @@ Reconciled the root project table, stable route map, product labels, tool docume
 - CI workflow YAML parsed, updated Markdown links resolved, and a Git-index path audit found **0** tracked database, generated-runtime, model-binary, or secret-path files. `.gitignore` now also covers common serialized model formats.
 - Repo-wide Ruff still contains the previously documented legacy findings; CI checks the maintained/changed scopes and does not reformat unrelated apps. Only Python 3.14 is installed locally.
 
-## Next action
+## Phase H notes
 
-Begin Phase H in a temporary tracked checkout: regenerate synthetic fixtures, run all five evaluations and thresholds, tests, static/type checks, app health/API smoke checks, and final path/secret/claim audits. Record the exact results and remaining limits in `docs/BUILD_REPORT.md`.
+The Phase G commit was extracted into a new temporary checkout outside Project Alpha. A fresh Python 3.14 virtual environment installed the pinned lock file. `scripts.seed_all` regenerated ignored demo assets there; all five evaluations and the shared thresholds passed. The complete 160-test suite passed with seven dependency deprecation warnings. Scoped Ruff, shared/BI/Copilot/Inventory mypy, `pip check`, tracked JavaScript syntax, and diff whitespace checks passed. A hidden local server passed root health for all fourteen mounted tools, project health endpoints, the inventory backtest, the BI read-only demo, and expected unauthenticated refusals for Hub, Copilot, and Knowledge session routes. No weather request was made.
+
+The repository-path audit found no tracked database, generated runtime, model binary, or secret-named path; a high-confidence credential-pattern scan over tracked source found no matches. Test database fixtures use pytest temporary directories, and test startup disables dotenv loading and external LLM providers. Detailed results and limits are in [BUILD_REPORT.md](BUILD_REPORT.md).
+
+The local machine provides Python 3.14 only. Python 3.12/3.13 GitHub runners and the Windows fast-test job are configured but remain pending hosted CI execution. Browser automation, external penetration testing, real identity-provider validation, and production deployment are outside the verified local gate. The repo-wide Ruff legacy findings remain outside the maintained scopes; CI does not reformat unrelated apps.
+
+## Complete
+
+Phases A–H are implemented and locally verified. No remote push, merge, or rebase was performed. Review the application and [the build report](BUILD_REPORT.md) before deciding whether to run hosted CI or use any live data.
